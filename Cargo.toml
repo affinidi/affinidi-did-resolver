@@ -1,0 +1,63 @@
+[workspace]
+members = [
+    "affinidi-did-resolver-methods/did-peer",
+    "affinidi-did-resolver-cache-sdk",
+    "affinidi-did-resolver-cache-server",
+    "affinidi-did-resolver-methods",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.5"
+edition = "2021"
+authors = ["Glenn Gore <glenn@affinidi.com>"]
+description = "Affinidi DID Resolver"
+readme = "README.md"
+homepage = "https://affinidi.com/"
+keywords = ["did", "ssi"]
+publish = true
+license = "Apache-2.0"
+repository = "https://github.com/affinidi/affinidi-did-resolver"
+
+[workspace.dependencies]
+
+# Common Dependencies
+moka = { version = "0.12.8", features = ["future"] }
+rand = "0.8"
+regex = "1"
+serde = { version = "1.0", features = ["derive", "rc"] }
+serde_json = "1.0"
+blake2 = "0.10"
+ssi = "0.8"
+thiserror = "1.0"
+tokio = { version = "1.40", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Cache Server
+affinidi-did-resolver-cache-sdk = { version = "0.1", path = "./affinidi-did-resolver-cache-sdk" }
+axum = { version = "0.7", features = ["ws"] }
+axum-extra = { version = "0.9.3", features = ["typed-header"] }
+axum-server = { version = "0.7", features = ["tls-rustls"] }
+did-peer = { version = "0.1", path = "./affinidi-did-resolver-methods/did-peer" }
+chrono = "0.4"
+http = "1"
+toml = "0.8"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+
+# Cache Client (SDK)
+futures-util = "0.3"
+tokio-tungstenite = "0.23"
+rayon = "1.10"
+num-format = "0.4.4"
+clap = { version = "4.5", features = ["derive"] }
+number_prefix = "0.4"
+
+# DID methods
+askar-crypto = { version = "0.3.1", features = ["alloc"] }
+base64 = "0.22"
+iref = { version = "3.2.2", features = ["serde"] }
+multibase = "0.9.1"
+serde-wasm-bindgen = "0.6.5"
+wasm-bindgen = "0.2.84"
+wasm-bindgen-futures = "0.4.42"

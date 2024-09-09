@@ -1,0 +1,31 @@
+# Affinidi DID-Peer ChangeLog
+
+## Release 0.4.1 - 5th September 2024
+
+- Added Purpose Codes for did:peer:2
+  - A : Assertion Method
+  - D : Capability Delegation
+  - I : Capability Invocation
+- Added support for did:peer type 0 (effectively translates did:peer:0(id) to a did:key:(id))
+
+## Release 0.4.0 - 28th July 2024
+
+- Refactored to support SSI v0.8 crate
+- Fixed old crate dependencies caused by SSI v0.7 crate
+- Fixed type definitions on verificationMethod to not use `multikey`
+
+## Release 0.3.1 - 16th May 2024
+
+- Ensured every unwrap() is handled so no panics.
+
+## Release 0.3.0 - 27th April 2024
+
+- Added example website with full WASM integration with resolve_did_peer() and create_did_peer()
+- Changed the DIDPeerCreateKeys struct so that you can specify key type (supports ed25519, p256 and secp256k1)
+- Cleaned up WASM definitions and bindings
+
+## Release 0.2.0 - 21st April 2024
+
+- Added WASM bind for resolve_did_peer()
+- Changed create_did_peer() input and return results so it can support auto-generating key values and return private key info
+- Documentation for WASM structs and functions provided
