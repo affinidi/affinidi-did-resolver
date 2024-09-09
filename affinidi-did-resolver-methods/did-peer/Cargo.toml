@@ -1,0 +1,36 @@
+[package]
+name = "did-peer"
+version.workspace = true
+description = "Implementation of the did:peer method in Rust, uses the ssi crate"
+repository.workspace = true
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+publish.workspace = true
+license.workspace = true
+readme = "README.md"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+base64.workspace = true
+iref.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+serde-wasm-bindgen.workspace = true
+ssi.workspace = true
+thiserror.workspace = true
+wasm-bindgen.workspace = true
+wasm-bindgen-futures.workspace = true
+
+[dev-dependencies]
+askar-crypto.workspace = true
+tokio.workspace = true
+multibase.workspace = true
+
+[profile.release]
+# Tell `rustc` to optimize for small code size.
+opt-level = "s"
+lto = true
