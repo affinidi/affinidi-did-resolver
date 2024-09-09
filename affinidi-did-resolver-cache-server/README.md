@@ -1,4 +1,4 @@
-# Affinidi Trust Network - DID Universal Resolver Cache
+# Affinidi DID Resolver - DID Universal Resolver Cache
 
 Provides local caching for DID resolution and caching of DID Documents
 
