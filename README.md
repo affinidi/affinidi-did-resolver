@@ -2,6 +2,9 @@
 
 Library of useful Decentralized Identifier (DID) libraries.
 
+> **IMPORTANT:**
+> Affinidi DID Resolver is provided "as is" without any warranties or guarantees, and by using this framework, users agree to assume all risks associated with its deployment and use including implementing security, and privacy measures in their applications. Affinidi assumes no liability for any issues arising from the use or modification of the project.
+
 ## Crate Structure
 
 - affinidi-did-resolver-cache-sdk
