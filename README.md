@@ -1,4 +1,4 @@
-# Affinidi Trust Network - Affinidi DID Resolver
+# Affinidi DID Resolver
 
 Library of useful Decentralized Identifier (DID) libraries.
 
