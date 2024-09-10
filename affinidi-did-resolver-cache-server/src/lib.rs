@@ -15,6 +15,7 @@ pub(crate) mod common;
 pub mod config;
 pub mod errors;
 pub mod handlers;
+pub mod server;
 pub mod session;
 pub mod statistics;
 
