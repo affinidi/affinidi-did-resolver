@@ -1,5 +1,5 @@
-use affinidi_did_resolver_cache_sdk::{errors::DIDCacheError};
-use affinidi_did_resolver_cache_server::{server::start};
+use affinidi_did_resolver_cache_sdk::errors::DIDCacheError;
+use affinidi_did_resolver_cache_server::server::start;
 
 /// Main entry point for the `affinidi-did-resolver-cache-server` binary.
 ///
