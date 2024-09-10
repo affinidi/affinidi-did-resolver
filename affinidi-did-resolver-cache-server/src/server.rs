@@ -1,11 +1,11 @@
-use affinidi_did_resolver_cache_sdk::{
-    config::ClientConfigBuilder, errors::DIDCacheError, DIDCacheClient,
-};
 use crate::{
     config::init,
     handlers::{application_routes, health_checker_handler},
     statistics::{statistics, Statistics},
     SharedData,
+};
+use affinidi_did_resolver_cache_sdk::{
+    config::ClientConfigBuilder, errors::DIDCacheError, DIDCacheClient,
 };
 use axum::{routing::get, Router};
 use http::Method;
