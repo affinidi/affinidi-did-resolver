@@ -73,7 +73,7 @@ dependencies = [
 
 [[package]]
 name = "affinidi-did-resolver-cache-sdk"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "blake2",
  "clap 4.5.17",
@@ -96,7 +96,7 @@ dependencies = [
 
 [[package]]
 name = "affinidi-did-resolver-cache-server"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "affinidi-did-resolver-cache-sdk",
  "axum",
@@ -121,7 +121,7 @@ dependencies = [
 
 [[package]]
 name = "affinidi-did-resolver-methods"
-version = "0.1.7"
+version = "0.1.8"
 
 [[package]]
 name = "ahash"
@@ -1666,7 +1666,7 @@ dependencies = [
 
 [[package]]
 name = "did-peer"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "askar-crypto",
  "base64 0.22.1",
@@ -6001,7 +6001,9 @@ checksum = "c6989540ced10490aaf14e6bad2e3d33728a2813310a0c71d1574304c49631cd"
 dependencies = [
  "futures-util",
  "log",
+ "native-tls",
  "tokio",
+ "tokio-native-tls",
  "tungstenite 0.23.0",
 ]
 
@@ -6220,6 +6222,7 @@ dependencies = [
  "http 1.1.0",
  "httparse",
  "log",
+ "native-tls",
  "rand",
  "sha1",
  "thiserror",
