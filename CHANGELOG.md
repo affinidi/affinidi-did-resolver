@@ -2,6 +2,14 @@
 
 ## Changelog history
 
+### 15th September 2024 (release 0.1.9)
+
+* clarity: Added a note regarding serviceEndpoint Id's being a URI vs a IRI (SSI Crate limitation)
+  * This changes serviceEndpoint.id from `#service` to `did:peer:#service` so that it passes Uri checks
+* fix: If more than a single service was specified, then this would crash due to `#service-n` not being a valid URI
+  * Changed so that all serviceEndpoint Id's are `did:peer:#service` as the starting string
+* update: `tokio-tungstenite` crate updated from 0.23 to 0.24
+
 ### 9th September 2024 (release 0.1.5)
 
 * Renaming crate names
