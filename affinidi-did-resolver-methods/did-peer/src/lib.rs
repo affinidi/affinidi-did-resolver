@@ -148,6 +148,8 @@ impl From<DIDPeerService> for Service {
         let id = if let Some(id) = service.id {
             UriBuf::new(id.into()).unwrap()
         } else {
+            // TODO: Should be #service
+            // SSI Crate expects a URI for the service ID
             UriBuf::new("did:peer:#service".into()).unwrap()
         };
 
@@ -454,8 +456,12 @@ impl DIDMethodResolver for DIDPeer {
 
                             let mut service: Service = service.into();
                             if service_count > 0 {
+                                // TODO: Should be #service-1, #service-2, etc
+                                // SSI Crate expects a URI for the service ID
                                 service.id = UriBuf::new(
-                                    ["#service-", &service_count.to_string()].concat().into(),
+                                    ["did:peer:#service-", &service_count.to_string()]
+                                        .concat()
+                                        .into(),
                                 )
                                 .unwrap();
                             }
