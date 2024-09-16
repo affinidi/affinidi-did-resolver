@@ -296,7 +296,7 @@ impl DIDMethodResolver for DIDPeer {
         // did:peer:2.(process from here)
         let parts: Vec<&str> = method_specific_id[2..].split('.').collect();
         let mut key_count: u32 = 1;
-        let mut service_count: u32 = 0;
+        let mut service_idx: u32 = 0;
 
         for part in parts {
             let ch = part.chars().next();
@@ -455,18 +455,18 @@ impl DIDMethodResolver for DIDPeer {
                             };
 
                             let mut service: Service = service.into();
-                            if service_count > 0 {
+                            if service_idx > 0 {
                                 // TODO: Should be #service-1, #service-2, etc
                                 // SSI Crate expects a URI for the service ID
                                 service.id = UriBuf::new(
-                                    ["did:peer:#service-", &service_count.to_string()]
+                                    ["did:peer:#service-", &service_idx.to_string()]
                                         .concat()
                                         .into(),
                                 )
                                 .unwrap();
                             }
                             services.push(service);
-                            service_count += 1;
+                            service_idx += 1;
                         }
                         other => {
                             return Err(Error::RepresentationNotSupported(format!(
