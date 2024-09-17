@@ -2,6 +2,10 @@
 
 ## Changelog history
 
+### 17th September 2024 (release 0.1.10)
+
+* minor: Example `generate` was adding a trailing `/` on URI for serviceEndpoint
+
 ### 15th September 2024 (release 0.1.9)
 
 * clarity: Added a note regarding serviceEndpoint Id's being a URI vs a IRI (SSI Crate limitation)
