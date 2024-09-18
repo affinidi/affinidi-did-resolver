@@ -2,6 +2,12 @@
 
 ## Changelog history
 
+### 18th September 2024 (release 0.1.10)
+
+* fix: example did-peer `generate` added a trailing `/` on the serviceEndpoint URI
+* removed `did-peer` LICENCE and CHANGELOG files, all contained in the parent crate `affinidi-did-resolver`
+* Bumping crate versions
+
 ### 15th September 2024 (release 0.1.9)
 
 * clarity: Added a note regarding serviceEndpoint Id's being a URI vs a IRI (SSI Crate limitation)
