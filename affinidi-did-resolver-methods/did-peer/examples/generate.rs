@@ -95,7 +95,7 @@ async fn main() {
     let services = vec![DIDPeerService {
         _type: "dm".into(),
         service_end_point: PeerServiceEndPoint::Long(PeerServiceEndPointLong {
-            uri: "https://localhost:7037/".into(),
+            uri: "https://localhost:7037".into(),
             accept: vec!["didcomm/v2".into()],
             routing_keys: vec![],
         }),
