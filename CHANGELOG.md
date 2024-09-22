@@ -2,6 +2,11 @@
 
 ## Changelog history
 
+### 22nd September 2024 (release 0.1.11)
+
+* Updating crates (SSI, Tower)
+* bumping minor crate versions
+
 ### 18th September 2024 (release 0.1.10)
 
 * fix: example did-peer `generate` added a trailing `/` on the serviceEndpoint URI
