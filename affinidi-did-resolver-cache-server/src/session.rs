@@ -47,8 +47,7 @@ impl IntoResponse for SessionError {
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Session {
-    pub session_id: String,  // Unique session transaction ID
-    pub remote_addr: String, // Remote Socket address
+    pub session_id: String, // Unique session transaction ID
 }
 
 #[async_trait]
@@ -59,7 +58,7 @@ where
 {
     type Rejection = SessionError;
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let remote_addr = if let Some(address) = parts
+        if let Some(address) = parts
             .extensions
             .get::<axum::extract::ConnectInfo<SocketAddr>>()
             .map(|ci| ci.0)
@@ -74,15 +73,9 @@ where
 
         let session_id = create_session_id();
 
-        info!(
-            "{}: Connection accepted from address({})",
-            &session_id, &remote_addr
-        );
+        info!("{}: Connection accepted", &session_id);
 
-        let session = Session {
-            session_id,
-            remote_addr,
-        };
+        let session = Session { session_id };
 
         Ok(session)
     }
