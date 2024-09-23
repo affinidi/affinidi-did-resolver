@@ -8,7 +8,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.10"
+version = "0.1.11"
 edition = "2021"
 authors = ["Glenn Gore <glenn@affinidi.com>"]
 description = "Affinidi DID Resolver"
@@ -28,7 +28,7 @@ regex = "1"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
 blake2 = "0.10"
-ssi = "0.8"
+ssi = "0.9"
 thiserror = "1.0"
 tokio = { version = "1.40", features = ["full"] }
 tracing = "0.1"
@@ -38,12 +38,12 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 affinidi-did-resolver-cache-sdk = { version = "0.1", path = "./affinidi-did-resolver-cache-sdk" }
 did-peer = { version = "0.1", path = "./affinidi-did-resolver-methods/did-peer" }
 axum = { version = "0.7", features = ["ws"] }
-axum-extra = { version = "0.9.3", features = ["typed-header"] }
+axum-extra = { version = "0.9", features = ["typed-header"] }
 axum-server = { version = "0.7", features = ["tls-rustls"] }
 chrono = "0.4"
 http = "1"
 toml = "0.8"
-tower-http = { version = "0.5", features = ["cors", "trace"] }
+tower-http = { version = "0.6", features = ["cors", "trace"] }
 
 # Cache Client (SDK)
 futures-util = "0.3"
@@ -59,5 +59,5 @@ base64 = "0.22"
 iref = { version = "3.2.2", features = ["serde"] }
 multibase = "0.9.1"
 serde-wasm-bindgen = "0.6.5"
-wasm-bindgen = "0.2.84"
-wasm-bindgen-futures = "0.4.42"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
