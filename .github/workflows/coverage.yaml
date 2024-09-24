@@ -2,9 +2,6 @@ name: coverage
 
 on: [push, pull_request]
 
-env:
-  RUST_BACKTRACE: 1
-
 jobs:
   coverage:
     runs-on: ubuntu-24.04
@@ -26,7 +23,7 @@ jobs:
       - name: Generate code coverage
         run: |
           cargo install cargo-tarpaulin
-          cargo tarpaulin --engine llvm --follow-exec --post-test-delay 10 --all-features --workspace --timeout 120 --out xml
+          cargo tarpaulin --engine llvm --fail-under=15
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v4
