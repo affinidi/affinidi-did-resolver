@@ -23,4 +23,4 @@ jobs:
       - name: Generate code coverage
         run: |
           cargo install cargo-tarpaulin
-          cargo tarpaulin --engine llvm --fail-under=15
+          cargo tarpaulin --engine llvm --fail-under=20
