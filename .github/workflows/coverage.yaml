@@ -13,7 +13,12 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: coverage
+      - name: Generate code coverage
         run: |
           cargo install cargo-tarpaulin
-          cargo tarpaulin --engine llvm --follow-exec --post-test-delay 10
+          cargo tarpaulin --engine llvm --follow-exec --post-test-delay 10 --verbose --all-features --workspace --timeout 120 --out xml
+
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: true
