@@ -14,4 +14,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: coverage
-        run: cargo tarpaulin --engine llvm --follow-exec --post-test-delay 10
+        run: |
+          cargo install cargo-tarpaulin
+          cargo tarpaulin --engine llvm --follow-exec --post-test-delay 10
