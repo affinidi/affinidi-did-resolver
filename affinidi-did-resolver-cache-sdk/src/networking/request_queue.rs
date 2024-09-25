@@ -143,9 +143,7 @@ mod tests {
 
     use blake2::{Blake2s256, Digest};
     use rand::{distributions::Alphanumeric, Rng};
-    use rayon::range;
-    use ssi::dids::DID;
-    use tokio::sync::oneshot::{self, Receiver, Sender};
+    use tokio::sync::oneshot::{self, Sender};
 
     use crate::{
         config,
@@ -158,6 +156,7 @@ mod tests {
     async fn new_works() {
         let config = config::ClientConfigBuilder::default().build();
         let request_list = RequestList::new(&config);
+
         assert_eq!(request_list.list_full, false);
         assert_eq!(request_list.total_count, 0);
     }
@@ -225,6 +224,7 @@ mod tests {
     async fn remove_key_not_found() {
         let config = config::ClientConfigBuilder::default().build();
         let mut request_list = RequestList::new(&config);
+
         request_list.remove(&_hash_did(DID_KEY), None).unwrap();
     }
 
@@ -251,10 +251,12 @@ mod tests {
     #[tokio::test]
     async fn remove_passing_uuid_works() {
         let (mut request_list, did_to_uuid) = _fill_request_list([DID_KEY].to_vec(), true, Some(1));
+
         let num_of_channels_before_remove =
             request_list.list.get(&_hash_did(DID_KEY)).unwrap().len();
         let total_count_before_remove = request_list.total_count;
         let ids = did_to_uuid.get(DID_KEY).unwrap();
+
         request_list
             .remove(&_hash_did(DID_KEY), ids.first().cloned())
             .unwrap();
@@ -270,11 +272,7 @@ mod tests {
     async fn remove_without_passing_uuid_to_remove_all_works() {
         let (mut request_list, _) = _fill_request_list([DID_KEY].to_vec(), true, Some(4));
 
-        let total_count_before_remove = request_list.total_count;
-        let num_of_channels_before_remove =
-            request_list.list.get(&_hash_did(DID_KEY)).unwrap().len();
-
-        let removed_list = request_list.remove(&_hash_did(DID_KEY), None).unwrap();
+        request_list.remove(&_hash_did(DID_KEY), None).unwrap();
 
         assert_eq!(request_list.total_count, 0);
     }
@@ -282,7 +280,8 @@ mod tests {
     #[tokio::test]
     async fn remove_works() {
         let (mut request_list, _) = _fill_request_list([DID_KEY].to_vec(), false, None);
-        let removed_list = request_list.remove(&_hash_did(DID_KEY), None).unwrap();
+
+        request_list.remove(&_hash_did(DID_KEY), None).unwrap();
     }
 
     fn _hash_did(did: &str) -> String {
@@ -290,6 +289,7 @@ mod tests {
         hasher.update(did);
         format!("{:x}", hasher.clone().finalize())
     }
+
     fn _unique_id() -> String {
         rand::thread_rng()
             .sample_iter(&Alphanumeric)
@@ -310,14 +310,18 @@ mod tests {
                 oneshot::channel::<WSCommands>().0,
             )
         }
+
         let nested_channels_num = if let Some(nested_channels) = fill_channels_for_key_number {
             nested_channels // This returns the u8
         } else {
             0 // Handle None case by returning 0 or some other u8 value
         };
+
         let mut did_to_uuid_map: HashMap<String, Vec<String>> = HashMap::new();
+
         let config = config::ClientConfigBuilder::default().build();
         let mut request_list = RequestList::new(&config);
+
         for did in dids {
             let (unique_id, did_hash, tx) = get_hash_and_id(did);
             let mut uuids_arr: Vec<String> = [unique_id.clone()].to_vec();
