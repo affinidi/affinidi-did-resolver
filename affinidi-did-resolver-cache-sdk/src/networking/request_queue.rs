@@ -219,7 +219,7 @@ mod tests {
 
         assert_eq!(request_list.total_count, 2);
     }
-    #[should_panic]
+
     #[tokio::test]
     async fn remove_key_not_found() {
         let config = config::ClientConfigBuilder::default().build();
@@ -227,28 +227,24 @@ mod tests {
 
         let result = request_list.remove(&_hash_did(DID_KEY), None);
         assert!(result.is_none());
-        result.unwrap();
     }
 
-    #[should_panic]
     #[tokio::test]
     async fn remove_key_not_found_passing_uuid() {
         let config = config::ClientConfigBuilder::default().build();
         let mut request_list = RequestList::new(&config);
+
         let result = request_list.remove(&_hash_did(DID_KEY), Some("".to_string()));
         assert!(result.is_none());
-        result.unwrap();
     }
 
-    #[should_panic]
     #[tokio::test]
     async fn remove_key_not_found_passing_uuid_wrong_did() {
         let config = config::ClientConfigBuilder::default().build();
         let mut request_list = RequestList::new(&config);
-        let result = request_list.remove(&_hash_did("wrongdid"), Some("".to_string()));
 
+        let result = request_list.remove(&_hash_did("wrongdid"), Some("".to_string()));
         assert!(result.is_none());
-        result.unwrap();
     }
 
     #[tokio::test]
