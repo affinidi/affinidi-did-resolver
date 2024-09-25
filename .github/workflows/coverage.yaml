@@ -1,26 +1,14 @@
 name: coverage
 
-on: [push, pull_request]
-
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      
 jobs:
-  coverage:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Generate code coverage
-        run: |
-          cargo install cargo-tarpaulin
-          cargo tarpaulin --engine llvm --fail-under=14
+  rust-pipeline:
+    uses: affinidi/pipeline-rust/.github/workflows/coverage.yaml@feat/code-coverage
+    secrets: inherit
+    with:
+      coverage: 14
