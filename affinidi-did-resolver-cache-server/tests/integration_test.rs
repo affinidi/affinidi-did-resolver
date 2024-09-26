@@ -18,35 +18,11 @@ const DID_PKH: &str =
     "did:pkh:solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ:CKg5d12Jhpej1JqtmxLJgaFqqeYjxgPqToJ4LBdvG9Ev";
 
 #[tokio::test]
-async fn test_server() {
+async fn test_cache_server() {
     //  Run cache server
-    tokio::spawn(async move { start().await });
-    println!("Server running");
+    _start_cache_server().await;
 
-    // create did peer
-    let (e_did_key, v_did_key, keys) = _get_keys(DIDPeerKeyType::Secp256k1, true);
-    let services = vec![DIDPeerService {
-        _type: "dm".into(),
-        service_end_point: PeerServiceEndPoint::Long(PeerServiceEndPointLong {
-            uri: "https://localhost:7037".into(),
-            accept: vec!["didcomm/v2".into()],
-            routing_keys: vec![],
-        }),
-        id: None,
-    }];
-
-    let (did_peer, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
-    // Check did created
-    let parts: Vec<&str> = did_peer.split(":").collect();
-    let mut method_ids: Vec<&str> = parts[2].split(".").collect();
-    method_ids = method_ids[1..].to_vec();
-    let keys_multibase = [v_did_key[8..].to_string(), e_did_key[8..].to_string()];
-
-    for i in 0..2 {
-        assert!(keys_multibase.contains(&method_ids[i][1..].to_string()));
-    }
-    assert_eq!(parts.len(), 3);
-    assert_eq!(parts[1], "peer");
+    let did_peer = _create_and_validate_did_peer();
 
     // Build config with network
     let config = ClientConfigBuilder::default()
@@ -64,7 +40,7 @@ async fn test_server() {
         assert!(!res.cache_hit)
     }
 
-    // Check if it was a cache hit
+    // Check if it was a cache hit, should be cache hit
     assert!(client.resolve(DID_ETHR).await.unwrap().cache_hit);
 
     // Match doc in cache with resolved doc
@@ -75,6 +51,42 @@ async fn test_server() {
     }
     client.remove(DID_PKH).await.unwrap();
     assert!(!client.get_cache().contains_key(&_hash_did(DID_PKH)));
+}
+
+async fn _start_cache_server() {
+    tokio::spawn(async move { start().await });
+    println!("Server running");
+}
+
+fn _create_and_validate_did_peer() -> String {
+    let (e_did_key, v_did_key, keys) = _get_keys(DIDPeerKeyType::Secp256k1, true);
+    let services = vec![DIDPeerService {
+        _type: "dm".into(),
+        service_end_point: PeerServiceEndPoint::Long(PeerServiceEndPointLong {
+            uri: "https://localhost:7037".into(),
+            accept: vec!["didcomm/v2".into()],
+            routing_keys: vec![],
+        }),
+        id: None,
+    }];
+
+    let (did_peer, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+    _validate_did_peer(&did_peer, &e_did_key, &v_did_key);
+
+    did_peer
+}
+
+fn _validate_did_peer(did_peer: &str, e_did_key: &str, v_did_key: &str) {
+    let parts: Vec<&str> = did_peer.split(":").collect();
+    let mut method_ids: Vec<&str> = parts[2].split(".").collect();
+    method_ids = method_ids[1..].to_vec();
+    let keys_multibase = [v_did_key[8..].to_string(), e_did_key[8..].to_string()];
+
+    for i in 0..2 {
+        assert!(keys_multibase.contains(&method_ids[i][1..].to_string()));
+    }
+    assert_eq!(parts.len(), 3);
+    assert_eq!(parts[1], "peer");
 }
 
 fn _hash_did(did: &str) -> String {
