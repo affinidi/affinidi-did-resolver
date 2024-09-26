@@ -752,6 +752,290 @@ impl DIDPeer {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use ssi::{dids::DIDBuf, JWK};
+
+    use crate::{
+        DIDPeer, DIDPeerCreateKeys, DIDPeerKeyType, DIDPeerKeys, DIDPeerService,
+        PeerServiceEndPoint, PeerServiceEndPointLong,
+    };
+
+    #[tokio::test]
+    async fn create_peer_did_without_keys_and_services() {
+        let keys: Vec<DIDPeerCreateKeys> = vec![];
+        let services: Vec<DIDPeerService> = vec![];
+
+        let (did, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+        let parts: Vec<&str> = did.split(":").collect();
+
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[1], "peer");
+        assert!(parts[2].len() == 1);
+    }
+
+    #[tokio::test]
+    async fn create_peer_did_without_keys() {
+        let keys: Vec<DIDPeerCreateKeys> = vec![];
+        let services = vec![DIDPeerService {
+            _type: "dm".into(),
+            service_end_point: PeerServiceEndPoint::Long(PeerServiceEndPointLong {
+                uri: "https://localhost:7037".into(),
+                accept: vec!["didcomm/v2".into()],
+                routing_keys: vec![],
+            }),
+            id: None,
+        }];
+
+        let (did, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+        let parts: Vec<&str> = did.split(":").collect();
+        let method_ids: Vec<&str> = parts[2].split(".").collect();
+
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[1], "peer");
+        assert!(method_ids.len() > 1);
+        assert!(method_ids[1].len() > 1);
+    }
+
+    #[tokio::test]
+    async fn create_peer_did_without_services() {
+        let (e_did_key, v_did_key, keys) = _get_keys(Some(DIDPeerKeyType::Ed25519), true);
+        let services: Vec<DIDPeerService> = vec![];
+
+        let (did, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+        let parts: Vec<&str> = did.split(":").collect();
+        let mut method_ids: Vec<&str> = parts[2].split(".").collect();
+        method_ids = method_ids[1..].to_vec();
+        let keys_multibase = [v_did_key[8..].to_string(), e_did_key[8..].to_string()];
+
+        for i in 0..2 {
+            assert!(keys_multibase.contains(&method_ids[i][1..].to_string()));
+        }
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[1], "peer");
+    }
+
+    #[should_panic(expected = "UnsupportedKeyType")]
+    #[tokio::test]
+    async fn create_peer_did_should_throw_unsupported_key_error_p384() {
+        let (_, _, keys) = _get_keys(None, false);
+        // Create a service definition
+        let services = vec![DIDPeerService {
+            _type: "dm".into(),
+            service_end_point: PeerServiceEndPoint::Long(PeerServiceEndPointLong {
+                uri: "https://localhost:7037".into(),
+                accept: vec!["didcomm/v2".into()],
+                routing_keys: vec![],
+            }),
+            id: None,
+        }];
+
+        DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+    }
+
+    #[tokio::test]
+    async fn create_peer_did_works_ed25519_without_passing_pub_key() {
+        let (_, _, keys) = _get_keys(Some(DIDPeerKeyType::Ed25519), false);
+
+        // Create a service definition
+        let services = vec![DIDPeerService {
+            _type: "dm".into(),
+            service_end_point: PeerServiceEndPoint::Long(PeerServiceEndPointLong {
+                uri: "https://localhost:7037".into(),
+                accept: vec!["didcomm/v2".into()],
+                routing_keys: vec![],
+            }),
+            id: None,
+        }];
+
+        let (did, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+        let parts: Vec<&str> = did.split(":").collect();
+        let method_ids: Vec<&str> = parts[2].split(".").collect();
+
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[1], "peer");
+        assert_eq!(method_ids.first().unwrap().parse::<i32>().unwrap(), 2);
+        assert_eq!(method_ids.len(), 4);
+    }
+
+    #[tokio::test]
+    async fn create_peer_did_works_p256_without_passing_pub_key() {
+        let (_, _, keys) = _get_keys(Some(DIDPeerKeyType::P256), false);
+
+        // Create a service definition
+        let services = vec![DIDPeerService {
+            _type: "dm".into(),
+            service_end_point: PeerServiceEndPoint::Long(PeerServiceEndPointLong {
+                uri: "https://localhost:7037".into(),
+                accept: vec!["didcomm/v2".into()],
+                routing_keys: vec![],
+            }),
+            id: None,
+        }];
+
+        let (did, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+        let parts: Vec<&str> = did.split(":").collect();
+        let method_ids: Vec<&str> = parts[2].split(".").collect();
+
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[1], "peer");
+        assert_eq!(method_ids.first().unwrap().parse::<i32>().unwrap(), 2);
+        assert_eq!(method_ids.len(), 4);
+    }
+
+    #[tokio::test]
+    async fn create_peer_did_works_secp256k1_without_passing_pub_key() {
+        let (_, _, keys) = _get_keys(Some(DIDPeerKeyType::Secp256k1), false);
+
+        // Create a service definition
+        let services = vec![DIDPeerService {
+            _type: "dm".into(),
+            service_end_point: PeerServiceEndPoint::Long(PeerServiceEndPointLong {
+                uri: "https://localhost:7037".into(),
+                accept: vec!["didcomm/v2".into()],
+                routing_keys: vec![],
+            }),
+            id: None,
+        }];
+
+        let (did, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+        let parts: Vec<&str> = did.split(":").collect();
+        let method_ids: Vec<&str> = parts[2].split(".").collect();
+
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[1], "peer");
+        assert_eq!(method_ids.first().unwrap().parse::<i32>().unwrap(), 2);
+        assert_eq!(method_ids.len(), 4);
+    }
+
+    #[tokio::test]
+    async fn create_peer_did_works_ed25519() {
+        let (e_did_key, v_did_key, keys) = _get_keys(Some(DIDPeerKeyType::Ed25519), true);
+
+        // Create a service definition
+        let services = vec![DIDPeerService {
+            _type: "dm".into(),
+            service_end_point: PeerServiceEndPoint::Long(PeerServiceEndPointLong {
+                uri: "https://localhost:7037".into(),
+                accept: vec!["didcomm/v2".into()],
+                routing_keys: vec![],
+            }),
+            id: None,
+        }];
+
+        let (did, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+        let parts: Vec<&str> = did.split(":").collect();
+        let mut method_ids: Vec<&str> = parts[2].split(".").collect();
+        method_ids = method_ids[1..].to_vec();
+        let keys_multibase = [v_did_key[8..].to_string(), e_did_key[8..].to_string()];
+
+        for i in 0..2 {
+            assert!(keys_multibase.contains(&method_ids[i][1..].to_string()));
+        }
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[1], "peer");
+    }
+
+    #[tokio::test]
+    async fn create_peer_did_works_p256() {
+        let (e_did_key, v_did_key, keys) = _get_keys(Some(DIDPeerKeyType::P256), true);
+        // Create a service definition
+        let services = vec![DIDPeerService {
+            _type: "dm".into(),
+            service_end_point: PeerServiceEndPoint::Long(PeerServiceEndPointLong {
+                uri: "https://localhost:7037".into(),
+                accept: vec!["didcomm/v2".into()],
+                routing_keys: vec![],
+            }),
+            id: None,
+        }];
+
+        let (did, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+        let parts: Vec<&str> = did.split(":").collect();
+        let mut method_ids: Vec<&str> = parts[2].split(".").collect();
+        method_ids = method_ids[1..].to_vec();
+        let keys_multibase = [v_did_key[8..].to_string(), e_did_key[8..].to_string()];
+
+        for i in 0..2 {
+            assert!(keys_multibase.contains(&method_ids[i][1..].to_string()));
+        }
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[1], "peer");
+    }
+
+    #[tokio::test]
+    async fn create_peer_did_works_secp256k1() {
+        let (e_did_key, v_did_key, keys) = _get_keys(Some(DIDPeerKeyType::Secp256k1), true);
+        // Create a service definition
+        let services = vec![DIDPeerService {
+            _type: "dm".into(),
+            service_end_point: PeerServiceEndPoint::Long(PeerServiceEndPointLong {
+                uri: "https://localhost:7037".into(),
+                accept: vec!["didcomm/v2".into()],
+                routing_keys: vec![],
+            }),
+            id: None,
+        }];
+
+        let (did, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+        let parts: Vec<&str> = did.split(":").collect();
+        let mut method_ids: Vec<&str> = parts[2].split(".").collect();
+        method_ids = method_ids[1..].to_vec();
+        let keys_multibase = [v_did_key[8..].to_string(), e_did_key[8..].to_string()];
+
+        for i in 0..2 {
+            assert!(keys_multibase.contains(&method_ids[i][1..].to_string()));
+        }
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[1], "peer");
+    }
+
+    fn _get_keys(
+        key_type: Option<DIDPeerKeyType>,
+        with_pub_key: bool,
+    ) -> (DIDBuf, DIDBuf, Vec<DIDPeerCreateKeys>) {
+        let encryption_key = match key_type {
+            Some(DIDPeerKeyType::Ed25519) => JWK::generate_ed25519().unwrap(),
+            Some(DIDPeerKeyType::P256) => JWK::generate_p256(),
+            Some(DIDPeerKeyType::Secp256k1) => JWK::generate_secp256k1(),
+            None => JWK::generate_p384(),
+        };
+        let verification_key = match key_type {
+            Some(DIDPeerKeyType::Ed25519) => JWK::generate_ed25519().unwrap(),
+            Some(DIDPeerKeyType::P256) => JWK::generate_p256(),
+            Some(DIDPeerKeyType::Secp256k1) => JWK::generate_secp256k1(),
+            None => JWK::generate_p384(),
+        };
+        //  Create the did:key DID's for each key above
+        let e_did_key = ssi::dids::DIDKey::generate(&encryption_key).unwrap();
+        let v_did_key = ssi::dids::DIDKey::generate(&verification_key).unwrap();
+
+        // Put these keys in order and specify the type of each key (we strip the did:key: from the front)
+        let keys = vec![
+            DIDPeerCreateKeys {
+                purpose: DIDPeerKeys::Verification,
+                type_: key_type.clone(),
+                public_key_multibase: if with_pub_key {
+                    Some(v_did_key[8..].to_string())
+                } else {
+                    None
+                },
+            },
+            DIDPeerCreateKeys {
+                purpose: DIDPeerKeys::Encryption,
+                type_: key_type.clone(),
+                public_key_multibase: if with_pub_key {
+                    Some(e_did_key[8..].to_string())
+                } else {
+                    None
+                },
+            },
+        ];
+
+        (e_did_key, v_did_key, keys)
+    }
+}
+
 // **********************************************************************************************************************************
 // WASM Specific structs and code
 // **********************************************************************************************************************************
