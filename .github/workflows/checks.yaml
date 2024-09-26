@@ -8,4 +8,3 @@ jobs:
     secrets: inherit
     with:
       auditIgnore: "RUSTSEC-2022-0040,RUSTSEC-2023-0071"
-
