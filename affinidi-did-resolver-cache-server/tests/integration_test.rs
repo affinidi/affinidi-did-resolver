@@ -5,11 +5,11 @@ use did_peer::{
     DIDPeer, DIDPeerCreateKeys, DIDPeerKeyType, DIDPeerKeys, DIDPeerService, PeerServiceEndPoint,
     PeerServiceEndPointLong,
 };
-
 use ssi::{
     dids::{DIDBuf, Document},
     JWK,
 };
+use tokio::time::{sleep, Duration};
 
 const DID_ETHR: &str = "did:ethr:0x1:0xb9c5714089478a327f09197987f16f9e5d936e8a";
 const DID_JWK: &str= "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFakoydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00NkdxRHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9";
@@ -27,6 +27,7 @@ async fn test_cache_server() {
     // Build config with network
     let config = ClientConfigBuilder::default()
         .with_network_mode("ws://127.0.0.1:8080/did/v1/ws")
+        .with_cache_ttl(10)
         .build();
 
     // Resolve DIDs and add to cache
@@ -51,6 +52,12 @@ async fn test_cache_server() {
     }
     client.remove(DID_PKH).await.unwrap();
     assert!(!client.get_cache().contains_key(&_hash_did(DID_PKH)));
+
+    sleep(Duration::from_secs(11)).await;
+    // Validate cache expiry
+    for did in dids.clone() {
+        assert_eq!(client.get_cache().contains_key(&_hash_did(did)), false);
+    }
 }
 
 async fn _start_cache_server() {
