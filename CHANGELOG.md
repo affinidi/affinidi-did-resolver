@@ -2,6 +2,10 @@
 
 ## Changelog history
 
+### 24nd September 2024 (release 0.1.12)
+
+* Removing all logs of remote_address
+
 ### 22nd September 2024 (release 0.1.11)
 
 * Updating crates (SSI, Tower)
