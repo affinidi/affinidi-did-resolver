@@ -754,12 +754,57 @@ impl DIDPeer {
 
 #[cfg(test)]
 mod test {
-    use ssi::{dids::DIDBuf, JWK};
-
     use crate::{
         DIDPeer, DIDPeerCreateKeys, DIDPeerKeyType, DIDPeerKeys, DIDPeerService,
         PeerServiceEndPoint, PeerServiceEndPointLong,
     };
+
+    use ssi::{
+        dids::{document::DIDVerificationMethod, DIDBuf, DIDResolver, DID},
+        JWK,
+    };
+
+    const DID_PEER: &str = "did:peer:2.Vz6MkiToqovww7vYtxm1xNM15u9JzqzUFZ1k7s7MazYJUyAxv.EzQ3shQLqRUza6AMJFbPuMdvFRFWm1wKviQRnQSC1fScovJN4s.SeyJ0IjoiRElEQ29tbU1lc3NhZ2luZyIsInMiOnsidXJpIjoiaHR0cHM6Ly8xMjcuMC4wLjE6NzAzNyIsImEiOlsiZGlkY29tbS92MiJdLCJyIjpbXX19";
+
+    #[should_panic(
+        expected = "Failed to convert verification_method. Reason: Missing publicKeyBase58"
+    )]
+    #[tokio::test]
+    async fn expand_keys_throws_key_parsing_missing_pbk58_error() {
+        let peer = DIDPeer;
+        let output = peer
+            .resolve(DID::new::<String>(&DID_PEER.to_string()).unwrap())
+            .await
+            .unwrap();
+
+        let mut document = output.document.document().clone();
+        let mut new_vms: Vec<DIDVerificationMethod> = vec![];
+        for mut vm in document.verification_method {
+            vm.properties.remove("publicKeyMultibase");
+            new_vms.push(vm);
+        }
+
+        document.verification_method = new_vms;
+        let _expanded_doc = DIDPeer::expand_keys(&document).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn expand_keys_works() {
+        let peer = DIDPeer;
+        let document = peer
+            .resolve(DID::new::<String>(&DID_PEER.to_string()).unwrap())
+            .await
+            .unwrap();
+
+        let vm_before_expansion = document.clone().document.verification_method.clone();
+        let expanded_doc = DIDPeer::expand_keys(&document.document).await.unwrap();
+        let vms_after_expansion = expanded_doc.verification_method;
+
+        for vm in vms_after_expansion.clone() {
+            assert!(vm.id.starts_with("did:key"));
+        }
+        assert_eq!(vm_before_expansion.len(), vms_after_expansion.len())
+    }
 
     #[tokio::test]
     async fn create_peer_did_without_keys_and_services() {
@@ -848,10 +893,11 @@ mod test {
             id: None,
         }];
 
-        let (did, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+        let (did, keys) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
         let parts: Vec<&str> = did.split(":").collect();
         let method_ids: Vec<&str> = parts[2].split(".").collect();
 
+        assert_eq!(keys.len(), 2);
         assert_eq!(parts.len(), 3);
         assert_eq!(parts[1], "peer");
         assert_eq!(method_ids.first().unwrap().parse::<i32>().unwrap(), 2);
@@ -873,10 +919,11 @@ mod test {
             id: None,
         }];
 
-        let (did, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+        let (did, keys) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
         let parts: Vec<&str> = did.split(":").collect();
         let method_ids: Vec<&str> = parts[2].split(".").collect();
 
+        assert_eq!(keys.len(), 2);
         assert_eq!(parts.len(), 3);
         assert_eq!(parts[1], "peer");
         assert_eq!(method_ids.first().unwrap().parse::<i32>().unwrap(), 2);
@@ -898,10 +945,12 @@ mod test {
             id: None,
         }];
 
-        let (did, _) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+        let (did, keys) = DIDPeer::create_peer_did(&keys, Some(&services)).unwrap();
+
         let parts: Vec<&str> = did.split(":").collect();
         let method_ids: Vec<&str> = parts[2].split(".").collect();
 
+        assert_eq!(keys.len(), 2);
         assert_eq!(parts.len(), 3);
         assert_eq!(parts[1], "peer");
         assert_eq!(method_ids.first().unwrap().parse::<i32>().unwrap(), 2);
