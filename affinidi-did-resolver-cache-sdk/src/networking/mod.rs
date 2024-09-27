@@ -17,11 +17,9 @@ mod request_queue;
 
 /// WSRequest is the request format to the websocket connection
 /// did: DID to resolve
-/// hash: SHA256 Hash of the DID
 #[derive(Debug, Deserialize, Serialize)]
 pub struct WSRequest {
     pub did: String,
-    pub hash: String,
 }
 
 /// WSResponse is the response format from the websocket connection
@@ -85,7 +83,7 @@ impl DIDCacheClient {
 
             // 1. Send the request to the network task, which will then send via websocket to the remote server
             network_task_tx
-                .send(WSCommands::Send(tx, unique_id.clone(), WSRequest { did: did.into(), hash: did_hash.into() }))
+                .send(WSCommands::Send(tx, unique_id.clone(), WSRequest { did: did.into() }))
                 .await
                 .map_err(|e| {
                     DIDCacheError::TransportError(format!(
