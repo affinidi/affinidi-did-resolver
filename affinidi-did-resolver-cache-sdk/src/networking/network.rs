@@ -9,8 +9,9 @@
 use std::time::Duration;
 
 use crate::{config::ClientConfig, errors::DIDCacheError, WSRequest};
+use blake2::{Blake2s256, Digest};
 use futures_util::{SinkExt, StreamExt};
-use ssi::{crypto::hashes::sha256, dids::Document};
+use ssi::dids::Document;
 use tokio::{
     net::TcpStream,
     select,
@@ -101,7 +102,10 @@ impl NetworkTask {
                         if let Some(cmd) = value {
                             match cmd {
                                 WSCommands::Send(channel, uid, request) => {
-                                    if network_task.cache.insert(String::from_utf8(sha256::sha256(request.did.as_bytes()).to_vec()).unwrap(), &uid, channel) {
+                                    let mut hasher = Blake2s256::new();
+                                    hasher.update(request.did.clone());
+                                    let did_hash = format!("{:x}", hasher.finalize());
+                                    if network_task.cache.insert(did_hash, &uid, channel) {
                                         let _ = network_task.ws_send(&mut websocket, &request).await;
                                     }
                                 }

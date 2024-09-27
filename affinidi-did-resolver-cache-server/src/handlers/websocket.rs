@@ -8,7 +8,7 @@ use axum::{
     },
     response::IntoResponse,
 };
-use ssi::crypto::hashes::sha256;
+use blake2::{Blake2s256, Digest};
 use tokio::select;
 use tracing::{debug, info, span, warn, Instrument};
 
@@ -83,7 +83,9 @@ async fn handle_socket(mut socket: WebSocket, state: SharedData) {
                                     }
                                     Err(e) => {
                                         // Couldn't resolve the DID, send an error back
-                                        let did_hash = String::from_utf8(sha256::sha256(request.did.as_bytes()).to_vec()).unwrap();
+                                        let mut hasher = Blake2s256::new();
+                                        hasher.update(request.did.clone());
+                                        let did_hash = format!("{:x}", hasher.finalize());
                                         warn!("Couldn't resolve DID: ({}) Reason: {}", &request.did, e);
                                         state.stats().await.increment_resolver_error();
                                         if let Err(e) = socket.send(Message::Text(serde_json::to_string(&WSResponseType::Error(WSResponseError {did: request.did, hash: did_hash, error: e.to_string()})).unwrap())).await {
