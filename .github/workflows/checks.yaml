@@ -13,3 +13,4 @@ jobs:
     with:
       auditIgnore: 'RUSTSEC-2022-0040,RUSTSEC-2023-0071'
       coverage: 50
+      useRedis: false
