@@ -4,7 +4,7 @@ use std::{
     env, fmt,
     fs::File,
     io::{self, BufRead},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use crate::DIDPeerError;
@@ -115,11 +115,48 @@ fn expand_env_vars(raw_config: &Vec<String>) -> Vec<String> {
 }
 
 pub fn init() -> Result<Config, DIDPeerError> {
+    let cur_working_dir = env::current_dir().unwrap();
+    let config_relative_path =
+        "affinidi-did-resolver/affinidi-did-resolver-methods/did-peer/conf/did-peer-conf.toml";
+    let config_path = _get_relative_path(
+        cur_working_dir.as_os_str().to_str().unwrap(),
+        &config_relative_path,
+    );
     // Read configuration file parameters
-    let config_raw = read_config_file("conf/did-peer-conf.toml")?;
+    let config_raw = read_config_file(&config_path)?;
 
     match Config::try_from(config_raw) {
         Ok(parsed_config) => Ok(parsed_config),
         Err(err) => Err(err),
     }
+}
+
+fn _get_relative_path(str1: &str, str2: &str) -> String {
+    // Convert strings into Path objects
+    let path1 = Path::new(str1);
+    let path2 = Path::new(str2);
+
+    // Iterate through components and find the common part
+    let mut up: usize = 0;
+    let mut common_part = PathBuf::new();
+    let mut path2_iter = path2.components().peekable();
+    for component1 in path1.components() {
+        if let Some(&component2) = path2_iter.peek() {
+            if component1 == component2 {
+                common_part.push(component1);
+                path2_iter.next();
+            } else if common_part.capacity() > 0 {
+                up += 1;
+            }
+        }
+    }
+
+    // Remove the common part from the second path
+    let mut final_path = PathBuf::new();
+    let remaining_part: PathBuf = path2_iter.collect();
+    for _ in 0..up {
+        final_path.push("..");
+    }
+    final_path.push(remaining_part);
+    final_path.to_str().unwrap_or("").to_string()
 }
