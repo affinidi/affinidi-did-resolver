@@ -132,6 +132,8 @@ pub fn init() -> Result<Config, DIDPeerError> {
 }
 
 fn _get_relative_path(str1: &str, str2: &str) -> String {
+    let mut repo_name_flag = false;
+    let repo_name = "affinidi-did-resolver";
     // Convert strings into Path objects
     let path1 = Path::new(str1);
     let path2 = Path::new(str2);
@@ -145,7 +147,10 @@ fn _get_relative_path(str1: &str, str2: &str) -> String {
             if component1 == component2 {
                 common_part.push(component1);
                 path2_iter.next();
-            } else if common_part.capacity() > 0 {
+            } else if common_part.capacity() > 0 && !repo_name_flag {
+                if component1.as_os_str().to_str().unwrap() == repo_name {
+                    repo_name_flag = true
+                }
                 up += 1;
             }
         }
