@@ -1,0 +1,7 @@
+### max_did_size_in_kb: Maximum size in KB of did to be resolved as FLOAT
+### default: 1
+max_did_size_in_kb = "${MAX_DID_SIZE_IN_KB:1.0}"
+
+### max_did_parts: Maximum  number of parts after splitting did on "."
+### Default: 5
+max_did_parts = "${MAX_DID_PARTS:5}"

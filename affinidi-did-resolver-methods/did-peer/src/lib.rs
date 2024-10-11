@@ -17,7 +17,10 @@
 //! }
 //! ```
 //!
+mod config;
+
 use base64::prelude::*;
+use config::init;
 use iref::UriBuf;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -42,6 +45,8 @@ use std::{collections::BTreeMap, fmt};
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
+const BYTES_PER_KILO_BYTE: f64 = 1000.0;
+
 #[derive(Error, Debug)]
 pub enum DIDPeerError {
     #[error("Unsupported key type")]
@@ -62,6 +67,8 @@ pub enum DIDPeerError {
     JsonParsingError(String),
     #[error("Internal error: {0}")]
     InternalError(String),
+    #[error("Configuration Error: {0}")]
+    ConfigError(String),
 }
 
 // Converts DIDPeerError to JsValue which is required for propagating errors to WASM
@@ -268,6 +275,17 @@ impl DIDMethodResolver for DIDPeer {
         method_specific_id: &'a str,
         options: Options,
     ) -> Result<Output<Vec<u8>>, Error> {
+        let config = init().unwrap();
+        let did_size_in_kb = method_specific_id.len() as f64 / BYTES_PER_KILO_BYTE;
+
+        // If DID's size is greater than 1KB we don't resolve it
+        if did_size_in_kb > config.max_did_size_in_kb {
+            return Err(Error::InvalidMethodSpecificId(format!(
+                "Method specific id's size: {:.3} is greater than 1KB, size must be less than 1KB",
+                did_size_in_kb
+            )));
+        }
+
         // If did:peer is type 0, then treat it as a did:key
         if let Some(id) = method_specific_id.strip_prefix('0') {
             return DIDKey.resolve_method_representation(id, options).await;
@@ -297,6 +315,13 @@ impl DIDMethodResolver for DIDPeer {
         let parts: Vec<&str> = method_specific_id[2..].split('.').collect();
         let mut key_count: u32 = 1;
         let mut service_idx: u32 = 0;
+
+        if parts.len() > config.max_did_parts {
+            return Err(Error::InvalidMethodSpecificId(format!(
+                "Must have less than or equal 5 keys and/or services combined, found {}",
+                parts.len()
+            )));
+        }
 
         for part in parts {
             let ch = part.chars().next();
