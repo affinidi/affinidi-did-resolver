@@ -116,6 +116,7 @@ fn expand_env_vars(raw_config: &Vec<String>) -> Vec<String> {
 
 pub fn init() -> Result<Config, DIDPeerError> {
     let cur_working_dir = env::current_dir().unwrap();
+    println!("CWD: {:?}", cur_working_dir);
     let config_relative_path =
         "affinidi-did-resolver/affinidi-did-resolver-methods/did-peer/conf/did-peer-conf.toml";
     let config_path = _get_relative_path(
