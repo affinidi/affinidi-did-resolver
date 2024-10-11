@@ -116,7 +116,7 @@ fn expand_env_vars(raw_config: &Vec<String>) -> Vec<String> {
 
 pub fn init() -> Result<Config, DIDPeerError> {
     let cur_working_dir = env::current_dir().unwrap();
-    println!("CWD: {:?}", cur_working_dir);
+
     let config_relative_path =
         "affinidi-did-resolver/affinidi-did-resolver-methods/did-peer/conf/did-peer-conf.toml";
     let config_path = _get_relative_path(
@@ -133,7 +133,6 @@ pub fn init() -> Result<Config, DIDPeerError> {
 }
 
 fn _get_relative_path(str1: &str, str2: &str) -> String {
-    let mut repo_name_flag = false;
     let repo_name = "affinidi-did-resolver";
     // Convert strings into Path objects
     let path1 = Path::new(str1);
@@ -148,10 +147,10 @@ fn _get_relative_path(str1: &str, str2: &str) -> String {
             if component1 == component2 {
                 common_part.push(component1);
                 path2_iter.next();
-            } else if common_part.capacity() > 0 && !repo_name_flag {
-                if component1.as_os_str().to_str().unwrap() == repo_name {
-                    repo_name_flag = true
-                }
+            } else if common_part.capacity() > 0
+                && component1.as_os_str().to_str().unwrap() != repo_name
+            {
+                println!("Component: {:?}", component1);
                 up += 1;
             }
         }
