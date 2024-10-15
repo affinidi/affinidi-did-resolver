@@ -21,6 +21,8 @@ pub mod errors;
 pub mod networking;
 mod resolver;
 
+const BYTES_PER_KILO_BYTE: f64 = 1000.0;
+
 /// DID Methods supported by the DID Universal Resolver Cache
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum DIDMethod {
@@ -146,6 +148,16 @@ impl DIDCacheClient {
     /// NOTE: The DID Document id may be different to the requested DID due to the DID having been updated.
     ///       The original DID should be in the `also_known_as` field of the DID Document.
     pub async fn resolve(&self, did: &str) -> Result<ResolveResponse, DIDCacheError> {
+        let did_size_in_kb = did.len() as f64 / BYTES_PER_KILO_BYTE;
+
+        // If DID's size is greater than 1KB we don't resolve it
+        if did_size_in_kb > self.config.max_did_size_in_kb {
+            return Err(DIDCacheError::DIDError(format!(
+                "The DID size of {:.3}KB exceeds the limit of {1}KB. Please ensure the size is less than {1}KB.",
+                did_size_in_kb, self.config.max_did_size_in_kb
+            )));
+        }
+
         //let did_hash = sha256::digest(did);
         let mut hasher = Blake2s256::new();
         hasher.update(did);
@@ -156,6 +168,15 @@ impl DIDCacheClient {
             return Err(DIDCacheError::DIDError(format!(
                 "did isn't to spec! did ({})",
                 did
+            )));
+        }
+
+        let key_parts: Vec<&str> = parts.last().unwrap().split(".").collect();
+        if key_parts.len() > self.config.max_did_parts {
+            return Err(DIDCacheError::DIDError(format!(
+                "The total number of keys and/or services must be less than or equal to {:?}, but {:?} were found.",
+                self.config.max_did_parts,
+                parts.len()
             )));
         }
 
