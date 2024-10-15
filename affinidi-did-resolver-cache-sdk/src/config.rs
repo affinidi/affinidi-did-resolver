@@ -33,6 +33,8 @@ pub struct ClientConfig {
     pub(crate) cache_ttl: u32,
     pub(crate) network_timeout: Duration,
     pub(crate) network_cache_limit_count: u32,
+    pub(crate) max_did_parts: usize,
+    pub(crate) max_did_size_in_kb: f64,
 }
 
 /// Config Builder to construct options required for the client.
@@ -49,6 +51,8 @@ pub struct ClientConfigBuilder {
     cache_ttl: u32,
     network_timeout: u32,
     network_cache_limit_count: u32,
+    max_did_parts: usize,
+    max_did_size_in_kb: f64,
 }
 
 impl Default for ClientConfigBuilder {
@@ -59,6 +63,8 @@ impl Default for ClientConfigBuilder {
             cache_ttl: 300,
             network_timeout: 5000,
             network_cache_limit_count: 100,
+            max_did_parts: 5,
+            max_did_size_in_kb: 1.0,
         }
     }
 }
@@ -99,6 +105,20 @@ impl ClientConfigBuilder {
         self
     }
 
+    /// Set maximum number of parts after splitting method-specific-id on "."
+    /// Default: 5 parts
+    pub fn with_max_did_parts(mut self, max_did_parts: usize) -> Self {
+        self.max_did_parts = max_did_parts;
+        self
+    }
+
+    /// Set maximum size in KB of did to be resolved as FLOAT
+    /// Default: 5 parts
+    pub fn with_max_did_size_in_kb(mut self, max_did_size_in_kb: f64) -> Self {
+        self.max_did_size_in_kb = max_did_size_in_kb;
+        self
+    }
+
     /// Build the [ClientConfig].
     pub fn build(self) -> ClientConfig {
         ClientConfig {
@@ -107,6 +127,8 @@ impl ClientConfigBuilder {
             cache_ttl: self.cache_ttl,
             network_timeout: Duration::from_millis(self.network_timeout.into()),
             network_cache_limit_count: self.network_cache_limit_count,
+            max_did_parts: self.max_did_parts,
+            max_did_size_in_kb: self.max_did_size_in_kb,
         }
     }
 }
