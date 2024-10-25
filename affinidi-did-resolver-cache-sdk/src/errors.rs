@@ -1,5 +1,6 @@
 //! Error types for the DID Cache Client SDK
 use thiserror::Error;
+use wasm_bindgen::JsValue;
 
 /// DIDCacheError is the error type for the DID Cache Client SDK.
 ///
@@ -21,4 +22,11 @@ pub enum DIDCacheError {
     /// A network timeout occurred.
     #[error("Network timeout")]
     NetworkTimeout,
+}
+
+// Converts DIDCacheError to JsValue which is required for propagating errors to WASM
+impl From<DIDCacheError> for JsValue {
+    fn from(err: DIDCacheError) -> JsValue {
+        JsValue::from(err.to_string())
+    }
 }

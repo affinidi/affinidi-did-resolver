@@ -1,8 +1,7 @@
+use crate::{errors::DIDCacheError, DIDCacheClient};
 use did_peer::DIDPeer;
 use ssi::dids::{DIDEthr, DIDKey, DIDResolver, DIDWeb, Document, DID, DIDJWK, DIDPKH};
 use tracing::error;
-
-use crate::{errors::DIDCacheError, DIDCacheClient};
 
 impl DIDCacheClient {
     /// Resolves a DID to a DID Document
@@ -40,7 +39,25 @@ impl DIDCacheClient {
                 let method = DIDKey;
 
                 match method.resolve(DID::new::<str>(did).unwrap()).await {
-                    Ok(res) => Ok(res.document.into_document()),
+                    Ok(res) => {
+                        // SSI Library isn't populating keyAgreement, manually add it if it's empty
+                        if res
+                            .document
+                            .verification_relationships
+                            .key_agreement
+                            .is_empty()
+                        {
+                            let key_id =
+                                res.document.verification_relationships.authentication[0].clone();
+
+                            let mut doc = res.document.into_document();
+                            doc.verification_relationships.key_agreement.push(key_id);
+
+                            Ok(doc)
+                        } else {
+                            Ok(res.document.into_document())
+                        }
+                    }
                     Err(e) => {
                         error!("Error: {:?}", e);
                         Err(DIDCacheError::DIDError(e.to_string()))

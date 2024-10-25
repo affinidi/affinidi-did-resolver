@@ -2,6 +2,15 @@
 
 ## Changelog history
 
+### 25th October 2024 (release 0.2.0)
+
+* Updating dependency crate versions
+* Code cleanup on warnings
+* Implement local and network features on SDK
+* Added to did:key the ability to populate keyAgreement
+* Added WASM support
+* Added HTTP GET resolution
+
 ### 24nd September 2024 (release 0.1.12)
 
 * Removing all logs of remote_address

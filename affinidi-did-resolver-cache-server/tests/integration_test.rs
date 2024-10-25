@@ -56,7 +56,7 @@ async fn test_cache_server() {
     sleep(Duration::from_secs(11)).await;
     // Validate cache expiry
     for did in dids.clone() {
-        assert_eq!(client.get_cache().contains_key(&_hash_did(did)), false);
+        assert!(!client.get_cache().contains_key(&_hash_did(did)));
     }
 }
 
@@ -89,9 +89,10 @@ fn _validate_did_peer(did_peer: &str, e_did_key: &str, v_did_key: &str) {
     method_ids = method_ids[1..].to_vec();
     let keys_multibase = [v_did_key[8..].to_string(), e_did_key[8..].to_string()];
 
-    for i in 0..2 {
-        assert!(keys_multibase.contains(&method_ids[i][1..].to_string()));
-    }
+    method_ids.iter().take(2).for_each(|id| {
+        assert!(keys_multibase.contains(&id[1..].to_string()));
+    });
+
     assert_eq!(parts.len(), 3);
     assert_eq!(parts[1], "peer");
 }
