@@ -1,16 +1,23 @@
-use crate::SharedData;
+use crate::{config::Config, SharedData};
 use axum::{extract::State, response::IntoResponse, routing::get, Json, Router};
+use tracing::info;
 
+pub(crate) mod http;
 pub(crate) mod websocket;
 
-pub fn application_routes(shared_data: &SharedData) -> Router {
-    let app = Router::new()
+pub fn application_routes(shared_data: &SharedData, config: &Config) -> Router {
+    let mut app = Router::new()
         // Inbound message handling from ATM clients
         // Websocket endpoint for clients
         .route("/ws", get(websocket::websocket_handler));
 
+    if config.enable_http_endpoint {
+        info!("Enabling HTTP Resolver endpoint");
+        app = app.route("/resolve/:did", get(http::resolver_handler));
+    }
+
     Router::new()
-        .nest("/did/v1/", app)
+        .nest("/did/v1", app)
         .with_state(shared_data.to_owned())
 }
 

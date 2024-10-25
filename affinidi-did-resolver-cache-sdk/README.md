@@ -54,6 +54,8 @@ NOTE: When in network mode, the SDK will still cache locally to save on remote c
 
 All DID resolving is handled remotely, just the DID Document is returned and cached locally.
 
+You will need to enable the crate feature `network` to use Network Mode.
+
 ### Example Network mode with optional settings
 
 ```rust
@@ -88,7 +90,7 @@ A reference benchmark example is included that can be used to measure performanc
 
 Run the above from the $affinidi-did-resolver/affinidi-did-resolver-cache-sdk directory
 
-```
+``` bash
 Affinidi DID Cache SDK
 
 Usage: benchmark [OPTIONS] --generate-count <GENERATE_COUNT> --resolve-count <RESOLVE_COUNT>

@@ -10,6 +10,7 @@
 * Added to did:key the ability to populate keyAgreement
 * Added WASM support
 * Added HTTP GET resolution
+  * GET /did/v1/resolve/`did`
 
 ### 24nd September 2024 (release 0.1.12)
 
