@@ -16,6 +16,12 @@ statistics_interval = "${STATISTICS_INTERVAL:10}"
 ### that will resolve a DID Document from the cache.
 enable_http_endpoint = "${ENABLE_HTTP_ENDPOINT:true}"
 
+### enable_websocket_endpoint: true/false
+### Default: true
+### If true, the server will make available /resolve endpoint for websocket requests
+### that will resolve a DID Document from the cache.
+enable_websocket_endpoint = "${ENABLE_WEBSOCKET_ENDPOINT:true}"
+
 [cache]
 ### capacity_count: Approx how many items to cache in memory
 ### Default: ~1,000 cached DID Documents

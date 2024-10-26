@@ -35,6 +35,7 @@ struct ConfigRaw {
     pub log_level: String,
     pub listen_address: String,
     pub enable_http_endpoint: String,
+    pub enable_websocket_endpoint: String,
     pub statistics_interval: String,
     pub cache: CacheConfig,
 }
@@ -43,6 +44,7 @@ pub struct Config {
     pub log_level: LevelFilter,
     pub listen_address: String,
     pub enable_http_endpoint: bool,
+    pub enable_websocket_endpoint: bool,
     pub statistics_interval: Duration,
     pub cache_capacity_count: u32,
     pub cache_expire: u32,
@@ -54,6 +56,7 @@ impl fmt::Debug for Config {
             .field("log_level", &self.log_level)
             .field("listen_address", &self.listen_address)
             .field("enable_http_endpoint", &self.enable_http_endpoint)
+            .field("enable_websocket_endpoint", &self.enable_websocket_endpoint)
             .field(
                 "statistics_interval",
                 &format!("{} seconds", self.statistics_interval.as_secs()),
@@ -70,6 +73,7 @@ impl Default for Config {
             log_level: LevelFilter::INFO,
             listen_address: "".into(),
             enable_http_endpoint: true,
+            enable_websocket_endpoint: true,
             statistics_interval: Duration::from_secs(60),
             cache_capacity_count: CacheConfig::default()
                 .capacity_count
@@ -95,6 +99,7 @@ impl TryFrom<ConfigRaw> for Config {
             },
             listen_address: raw.listen_address,
             enable_http_endpoint: raw.enable_http_endpoint.parse().unwrap_or(true),
+            enable_websocket_endpoint: raw.enable_websocket_endpoint.parse().unwrap_or(true),
             statistics_interval: Duration::from_secs(raw.statistics_interval.parse().unwrap_or(60)),
             cache_capacity_count: raw.cache.capacity_count.parse().unwrap_or(1000),
             cache_expire: raw.cache.expire.parse().unwrap_or(300),

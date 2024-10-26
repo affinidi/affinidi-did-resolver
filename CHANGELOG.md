@@ -11,6 +11,7 @@
 * Added WASM support
 * Added HTTP GET resolution
   * GET /did/v1/resolve/`did`
+* Configuration option to enable HTTP or WebSocket routes
 
 ### 24nd September 2024 (release 0.1.12)
 

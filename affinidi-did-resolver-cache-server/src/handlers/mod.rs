@@ -6,10 +6,12 @@ pub(crate) mod http;
 pub(crate) mod websocket;
 
 pub fn application_routes(shared_data: &SharedData, config: &Config) -> Router {
-    let mut app = Router::new()
-        // Inbound message handling from ATM clients
-        // Websocket endpoint for clients
-        .route("/ws", get(websocket::websocket_handler));
+    let mut app = Router::new();
+
+    if config.enable_websocket_endpoint {
+        info!("Enabling WebSocket Resolver endpoint");
+        app = app.route("/ws", get(websocket::websocket_handler));
+    }
 
     if config.enable_http_endpoint {
         info!("Enabling HTTP Resolver endpoint");

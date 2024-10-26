@@ -5226,9 +5226,9 @@ dependencies = [
 
 [[package]]
 name = "ssi-status"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15ddef1a8a26f08e04b910db7e9b219ed009835640b53d14da5c1108f9ba8be3"
+checksum = "9916abcffaceda17352a41562217ebe12960676760f4c49c6fd90fdfd3b0589a"
 dependencies = [
  "base64 0.22.1",
  "flate2",
