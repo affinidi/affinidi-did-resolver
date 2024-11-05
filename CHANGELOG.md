@@ -1,8 +1,8 @@
-# Affinidi Trust Network - Affinidi Trusted Messaging
+# Affinidi Trust Network - Affinidi DID Resolver
 
 ## Changelog history
 
-### 25th October 2024 (release 0.2.0)
+### 5th November 2024 (release 0.2.0)
 
 * Updating dependency crate versions
 * Code cleanup on warnings
