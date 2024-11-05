@@ -35,8 +35,8 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Cache Server
-affinidi-did-resolver-cache-sdk = { version = "0.1", path = "./affinidi-did-resolver-cache-sdk" }
-did-peer = { version = "0.1", path = "./affinidi-did-resolver-methods/did-peer" }
+affinidi-did-resolver-cache-sdk = { version = "0.2", path = "./affinidi-did-resolver-cache-sdk" }
+did-peer = { version = "0.2", path = "./affinidi-did-resolver-methods/did-peer" }
 axum = { version = "0.7", features = ["ws"] }
 axum-extra = { version = "0.9", features = ["typed-header"] }
 axum-server = { version = "0.7", features = ["tls-rustls"] }
