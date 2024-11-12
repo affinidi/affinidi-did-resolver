@@ -157,7 +157,7 @@ mod tests {
         let config = config::ClientConfigBuilder::default().build();
         let request_list = RequestList::new(&config);
 
-        assert_eq!(request_list.list_full, false);
+        assert!(!request_list.list_full);
         assert_eq!(request_list.total_count, 0);
     }
 
@@ -169,7 +169,7 @@ mod tests {
         let (tx, _) = oneshot::channel::<WSCommands>();
 
         let unique_id: String = _unique_id();
-        let did_hash = _hash_did(&DID_KEY);
+        let did_hash = _hash_did(DID_KEY);
 
         let insert_result = request_list.insert(did_hash.clone(), &unique_id, tx);
 
@@ -191,7 +191,7 @@ mod tests {
         let insert_result2 = request_list.insert(did_hash.clone(), &unique_id, tx2);
 
         assert!(insert_result);
-        assert_eq!(insert_result2, false);
+        assert!(!insert_result2);
     }
 
     #[tokio::test]
@@ -305,16 +305,12 @@ mod tests {
         fn get_hash_and_id(did: &str) -> (String, String, Sender<WSCommands>) {
             (
                 _unique_id(),
-                _hash_did(&did),
+                _hash_did(did),
                 oneshot::channel::<WSCommands>().0,
             )
         }
 
-        let nested_channels_num = if let Some(nested_channels) = fill_channels_for_key_number {
-            nested_channels // This returns the u8
-        } else {
-            0 // Handle None case by returning 0 or some other u8 value
-        };
+        let nested_channels_num = fill_channels_for_key_number.unwrap_or(0);
 
         let mut did_to_uuid_map: HashMap<String, Vec<String>> = HashMap::new();
 

@@ -1,23 +1,43 @@
-//! DID Universal Resolver Cache Client SDK
-//!
-//! Used to easily connect to the DID Universal Resolver Cache.
-//!
+/*!
+DID Universal Resolver Cache Client SDK
+
+Used to easily connect to the DID Universal Resolver Cache.
+
+# Crate features
+As this crate can be used either natively or in a WASM environment, the following features are available:
+* **local**
+    **default** - Enables the local mode of the SDK. This is the default mode.
+* **network**
+    * Enables the network mode of the SDK. This mode requires a run-time service address to connect to.
+    * This feature is NOT supported in a WASM environment. Will cause a compile error if used in WASM.
+*/
+
+#[cfg(all(feature = "network", target_arch = "wasm32"))]
+compile_error!("Cannot enable both features at the same time");
+
 use blake2::{Blake2s256, Digest};
 use config::ClientConfig;
 use errors::DIDCacheError;
 use moka::future::Cache;
+#[cfg(feature = "network")]
 use networking::{
     network::{NetworkTask, WSCommands},
     WSRequest,
 };
 use ssi::dids::Document;
-use std::{fmt, sync::Arc, time::Duration};
+#[cfg(feature = "network")]
+use std::sync::Arc;
+use std::{fmt, time::Duration};
+#[cfg(feature = "network")]
 use tokio::sync::{mpsc, Mutex};
 use tracing::debug;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsValue;
 
 pub mod config;
 pub mod document;
 pub mod errors;
+#[cfg(feature = "network")]
 pub mod networking;
 mod resolver;
 
@@ -25,6 +45,7 @@ const BYTES_PER_KILO_BYTE: f64 = 1000.0;
 
 /// DID Methods supported by the DID Universal Resolver Cache
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[wasm_bindgen]
 pub enum DIDMethod {
     ETHR,
     JWK,
@@ -88,60 +109,18 @@ pub struct ResolveResponse {
 /// cache: Local cache for resolved DIDs
 /// network_task: OPTIONAL: Task to handle network requests
 /// network_rx: OPTIONAL: Channel to listen for responses from the network task
+#[wasm_bindgen(getter_with_clone)]
 #[derive(Clone)]
 pub struct DIDCacheClient {
     config: ClientConfig,
     cache: Cache<String, Document>,
+    #[cfg(feature = "network")]
     network_task_tx: Option<mpsc::Sender<WSCommands>>,
+    #[cfg(feature = "network")]
     network_task_rx: Option<Arc<Mutex<mpsc::Receiver<WSCommands>>>>,
 }
 
 impl DIDCacheClient {
-    /// Create a new DIDCacheClient with configuration generated from [ClientConfigBuilder](config::ClientConfigBuilder)
-    ///
-    /// Will return an error if the configuration is invalid.
-    ///
-    /// Establishes websocket connection and sets up the cache.
-    pub async fn new(config: ClientConfig) -> Result<Self, DIDCacheError> {
-        // Create the initial cache
-        let cache = Cache::builder()
-            .max_capacity(config.cache_capacity.into())
-            .time_to_live(Duration::from_secs(config.cache_ttl.into()))
-            .build();
-
-        let mut client = Self {
-            config,
-            cache,
-            network_task_tx: None,
-            network_task_rx: None,
-        };
-
-        if client.config.service_address.is_some() {
-            // Running in network mode
-
-            // Channel to communicate from SDK to network task
-            let (sdk_tx, mut task_rx) = mpsc::channel(32);
-            // Channel to communicate from network task to SDK
-            let (task_tx, sdk_rx) = mpsc::channel(32);
-
-            client.network_task_tx = Some(sdk_tx);
-            client.network_task_rx = Some(Arc::new(Mutex::new(sdk_rx)));
-            // Start the network task
-            let _config = client.config.clone();
-            tokio::spawn(async move {
-                let _ = NetworkTask::run(_config, &mut task_rx, &task_tx).await;
-            });
-
-            if let Some(arc_rx) = client.network_task_rx.as_ref() {
-                // Wait for the network task to be ready
-                let mut rx = arc_rx.lock().await;
-                rx.recv().await.unwrap();
-            }
-        }
-
-        Ok(client)
-    }
-
     /// Front end for resolving a DID
     /// Will check the cache first, and if not found, will resolve the DID
     /// Returns the initial DID, the hashed DID, and the resolved DID Document
@@ -158,7 +137,6 @@ impl DIDCacheClient {
             )));
         }
 
-        //let did_hash = sha256::digest(did);
         let mut hasher = Blake2s256::new();
         hasher.update(did);
         let did_hash = format!("{:x}", hasher.finalize());
@@ -193,12 +171,17 @@ impl DIDCacheClient {
         } else {
             debug!("did ({}) NOT in cache hash ({})", did, did_hash);
             // If the DID is not in the cache, resolve it (local or via network)
-            let doc = if self.config.service_address.is_none() {
-                debug!("resolving did ({}) locally", did);
-                self.local_resolve(did, &parts).await?
-            } else {
-                self.network_resolve(did, &did_hash).await?
+            #[cfg(feature = "network")]
+            let doc = {
+                if self.config.service_address.is_some() {
+                    self.network_resolve(did, &did_hash).await?
+                } else {
+                    self.local_resolve(did, &parts).await?
+                }
             };
+
+            #[cfg(not(feature = "network"))]
+            let doc = self.local_resolve(did, &parts).await?;
 
             debug!("adding did ({}) to cache ({})", did, did_hash);
             self.cache.insert(did_hash.clone(), doc.clone()).await;
@@ -220,6 +203,7 @@ impl DIDCacheClient {
     }
 
     /// Stops the network task if it is running and removes any resources
+    #[cfg(feature = "network")]
     pub fn stop(&self) {
         if let Some(tx) = self.network_task_tx.as_ref() {
             let _ = tx.blocking_send(WSCommands::Exit);
@@ -234,6 +218,74 @@ impl DIDCacheClient {
         hasher.update(did);
         let did_hash = format!("{:x}", hasher.finalize());
         self.cache.remove(&did_hash).await
+    }
+}
+
+/// Following are the WASM bindings for the DIDCacheClient
+#[wasm_bindgen]
+impl DIDCacheClient {
+    /// Create a new DIDCacheClient with configuration generated from [ClientConfigBuilder](config::ClientConfigBuilder)
+    ///
+    /// Will return an error if the configuration is invalid.
+    ///
+    /// Establishes websocket connection and sets up the cache.
+    pub async fn new(config: ClientConfig) -> Result<Self, DIDCacheError> {
+        // Create the initial cache
+        let cache = Cache::builder()
+            .max_capacity(config.cache_capacity.into())
+            .time_to_live(Duration::from_secs(config.cache_ttl.into()))
+            .build();
+
+        #[cfg(feature = "network")]
+        let mut client = Self {
+            config,
+            cache,
+            network_task_tx: None,
+            network_task_rx: None,
+        };
+        #[cfg(not(feature = "network"))]
+        let client = Self { config, cache };
+
+        #[cfg(feature = "network")]
+        {
+            if client.config.service_address.is_some() {
+                // Running in network mode
+
+                // Channel to communicate from SDK to network task
+                let (sdk_tx, mut task_rx) = mpsc::channel(32);
+                // Channel to communicate from network task to SDK
+                let (task_tx, sdk_rx) = mpsc::channel(32);
+
+                client.network_task_tx = Some(sdk_tx);
+                client.network_task_rx = Some(Arc::new(Mutex::new(sdk_rx)));
+
+                // Start the network task
+                let _config = client.config.clone();
+                tokio::spawn(async move {
+                    let _ = NetworkTask::run(_config, &mut task_rx, &task_tx).await;
+                });
+
+                if let Some(arc_rx) = client.network_task_rx.as_ref() {
+                    // Wait for the network task to be ready
+                    let mut rx = arc_rx.lock().await;
+                    rx.recv().await.unwrap();
+                }
+            }
+        }
+
+        Ok(client)
+    }
+
+    pub async fn wasm_resolve(&self, did: &str) -> Result<JsValue, DIDCacheError> {
+        let response = self.resolve(did).await?;
+
+        match serde_wasm_bindgen::to_value(&response.doc) {
+            Ok(values) => Ok(values),
+            Err(err) => Err(DIDCacheError::DIDError(format!(
+                "Error serializing DID Document: {}",
+                err
+            ))),
+        }
     }
 }
 

@@ -12,7 +12,7 @@ repository.workspace = true
 readme = "README.md"
 
 [dependencies]
-affinidi-did-resolver-cache-sdk.workspace = true
+affinidi-did-resolver-cache-sdk = { workspace = true, features = ["network"] }
 axum.workspace = true
 axum-server.workspace = true
 blake2.workspace = true

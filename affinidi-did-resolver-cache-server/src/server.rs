@@ -94,7 +94,7 @@ pub async fn start() -> Result<(), DIDCacheError> {
     });
 
     // build our application routes
-    let app: Router = application_routes(&shared_state);
+    let app: Router = application_routes(&shared_state, &config);
 
     // Add middleware to all routes
     let app = Router::new()

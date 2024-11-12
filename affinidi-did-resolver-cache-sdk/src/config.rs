@@ -21,17 +21,23 @@
 //! ```
 //!
 
+#[cfg(feature = "network")]
 use std::time::Duration;
+use wasm_bindgen::prelude::*;
 
 /// Private Configuration for the client.
 ///
 /// Use the [ClientConfigBuilder] to create a new configuration.
 #[derive(Clone, Debug)]
+#[wasm_bindgen(getter_with_clone)]
 pub struct ClientConfig {
+    #[cfg(feature = "network")]
     pub(crate) service_address: Option<String>,
     pub(crate) cache_capacity: u32,
     pub(crate) cache_ttl: u32,
+    #[cfg(feature = "network")]
     pub(crate) network_timeout: Duration,
+    #[cfg(feature = "network")]
     pub(crate) network_cache_limit_count: u32,
     pub(crate) max_did_parts: usize,
     pub(crate) max_did_size_in_kb: f64,
@@ -46,10 +52,13 @@ pub struct ClientConfig {
 /// - network_timeout: The timeout for network requests in milliseconds (default: 5000 (5 seconds)).
 /// - network_cache_limit_count: The maximum number of items to store in the network cache (default: 100).
 pub struct ClientConfigBuilder {
+    #[cfg(feature = "network")]
     service_address: Option<String>,
     cache_capacity: u32,
     cache_ttl: u32,
+    #[cfg(feature = "network")]
     network_timeout: u32,
+    #[cfg(feature = "network")]
     network_cache_limit_count: u32,
     max_did_parts: usize,
     max_did_size_in_kb: f64,
@@ -58,12 +67,15 @@ pub struct ClientConfigBuilder {
 impl Default for ClientConfigBuilder {
     fn default() -> Self {
         Self {
+            #[cfg(feature = "network")]
             service_address: None,
             cache_capacity: 100,
             cache_ttl: 300,
+            #[cfg(feature = "network")]
             network_timeout: 5000,
+            #[cfg(feature = "network")]
             network_cache_limit_count: 100,
-            max_did_parts: 5,
+            max_did_parts: 12,
             max_did_size_in_kb: 1.0,
         }
     }
@@ -72,6 +84,7 @@ impl Default for ClientConfigBuilder {
 impl ClientConfigBuilder {
     /// Enables network mode and sets the service address.
     /// Example: `ws://127.0.0.1:8080/did/v1/ws`
+    #[cfg(feature = "network")]
     pub fn with_network_mode(mut self, service_address: &str) -> Self {
         self.service_address = Some(service_address.into());
         self
@@ -93,6 +106,7 @@ impl ClientConfigBuilder {
 
     /// Set the timeout for network requests in milliseconds.
     /// Default: 5000 (5 seconds)
+    #[cfg(feature = "network")]
     pub fn with_network_timeout(mut self, network_timeout: u32) -> Self {
         self.network_timeout = network_timeout;
         self
@@ -100,6 +114,7 @@ impl ClientConfigBuilder {
 
     /// Set the network cache limit count
     /// Default: 100 items
+    #[cfg(feature = "network")]
     pub fn with_network_cache_limit_count(mut self, limit_count: u32) -> Self {
         self.network_cache_limit_count = limit_count;
         self
@@ -122,10 +137,13 @@ impl ClientConfigBuilder {
     /// Build the [ClientConfig].
     pub fn build(self) -> ClientConfig {
         ClientConfig {
+            #[cfg(feature = "network")]
             service_address: self.service_address,
             cache_capacity: self.cache_capacity,
             cache_ttl: self.cache_ttl,
+            #[cfg(feature = "network")]
             network_timeout: Duration::from_millis(self.network_timeout.into()),
+            #[cfg(feature = "network")]
             network_cache_limit_count: self.network_cache_limit_count,
             max_did_parts: self.max_did_parts,
             max_did_size_in_kb: self.max_did_size_in_kb,

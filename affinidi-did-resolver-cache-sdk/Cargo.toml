@@ -11,6 +11,15 @@ license.workspace = true
 repository.workspace = true
 readme = "README.md"
 
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+
+[features]
+default = ["local"]
+local = []
+network = ["dep:tokio-tungstenite"]
+
 [dependencies]
 blake2.workspace = true
 did-peer.workspace = true
@@ -19,15 +28,22 @@ moka.workspace = true
 rand.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+serde-wasm-bindgen.workspace = true
 ssi.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
-tokio-tungstenite.workspace = true
+tokio-tungstenite = { workspace = true, optional = true }
 tracing.workspace = true
 tracing-subscriber.workspace = true
+wasm-bindgen.workspace = true
+wasm-bindgen-futures.workspace = true
 
 [dev-dependencies]
 clap.workspace = true
 num-format.workspace = true
 number_prefix.workspace = true
 rayon.workspace = true
+
+[profile.release]
+lto = true
+opt-level = "s"

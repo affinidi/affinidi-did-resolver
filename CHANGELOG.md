@@ -1,6 +1,22 @@
-# Affinidi Trust Network - Affinidi Trusted Messaging
+# Affinidi Trust Network - Affinidi DID Resolver
 
 ## Changelog history
+
+### 13th November 2024 (release 0.2.1)
+
+* Updating crates
+* Changed how keys are resolved in did:peer from multicodec to JsonWebTokens
+
+### 5th November 2024 (release 0.2.0)
+
+* Updating dependency crate versions
+* Code cleanup on warnings
+* Implement local and network features on SDK
+* Added to did:key the ability to populate keyAgreement
+* Added WASM support
+* Added HTTP GET resolution
+  * GET /did/v1/resolve/`did`
+* Configuration option to enable HTTP or WebSocket routes
 
 ### 24nd September 2024 (release 0.1.12)
 

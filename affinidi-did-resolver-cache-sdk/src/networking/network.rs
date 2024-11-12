@@ -21,6 +21,7 @@ use tokio::{
     },
     time::sleep,
 };
+#[cfg(feature = "network")]
 use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
 use tracing::{debug, error, span, warn, Instrument, Level};
 
