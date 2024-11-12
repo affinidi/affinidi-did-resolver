@@ -2,6 +2,11 @@
 
 ## Changelog history
 
+### 13th November 2024 (release 0.2.1)
+
+* Updating crates
+* Changed how keys are resolved in did:peer from multicodec to JsonWebTokens
+
 ### 5th November 2024 (release 0.2.0)
 
 * Updating dependency crate versions

@@ -68,7 +68,13 @@ impl DIDCacheClient {
                 let method = DIDPeer;
 
                 match method.resolve(DID::new::<str>(did).unwrap()).await {
-                    Ok(res) => Ok(res.document.into_document()),
+                    Ok(res) => {
+                        // DID Peer will resolve to MultiKey, which confuses key matching
+                        // Expand the keys to raw keys
+                        DIDPeer::expand_keys(&res.document.into_document())
+                            .await
+                            .map_err(|e| DIDCacheError::DIDError(e.to_string()))
+                    }
                     Err(e) => {
                         error!("Error: {:?}", e);
                         Err(DIDCacheError::DIDError(e.to_string()))

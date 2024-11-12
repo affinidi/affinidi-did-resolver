@@ -27,12 +27,13 @@ use ssi::{
             self,
             representation::{self, MediaType},
             service::Endpoint,
-            verification_method, DIDVerificationMethod, Service, VerificationRelationships,
+            verification_method, DIDVerificationMethod, Resource, Service,
+            VerificationRelationships,
         },
         key::VerificationMethodType,
-        resolution::{self, Error, Options, Output},
+        resolution::{self, Content, Error, Options, Output, Parameters},
         DIDBuf, DIDKey, DIDMethod, DIDMethodResolver, DIDURLBuf, DIDURLReferenceBuf, Document,
-        RelativeDIDURLBuf, DID,
+        RelativeDIDURLBuf, DID, DIDURL,
     },
     jwk::Params,
     prelude::*,
@@ -715,6 +716,8 @@ impl DIDPeer {
     async fn _convert_vm(
         method: &DIDVerificationMethod,
     ) -> Result<DIDVerificationMethod, DIDPeerError> {
+        let current_controller = method.controller.clone();
+        let current_id = method.id.clone();
         let did_key = if let Some(key) = method.properties.get("publicKeyBase58") {
             ["did:key:", key.as_str().unwrap()].concat()
         } else if let Some(key) = method.properties.get("publicKeyMultibase") {
@@ -729,10 +732,19 @@ impl DIDPeer {
         let key_method = DIDKey;
 
         let output = match key_method
-            .resolve(DID::new::<String>(&did_key.clone()).unwrap())
+            .dereference_with(
+                DIDURL::new::<String>(&did_key.clone()).unwrap(),
+                Options {
+                    accept: None,
+                    parameters: Parameters {
+                        public_key_format: Some("JsonWebKey2020".to_string()),
+                        ..Default::default()
+                    },
+                },
+            )
             .await
         {
-            Ok(output) => output,
+            Ok(output) => output.content,
             Err(e) => {
                 return Err(DIDPeerError::KeyParsingError(format!(
                     "Failed to resolve key ({}). Reason: {}",
@@ -741,14 +753,19 @@ impl DIDPeer {
             }
         };
 
-        if let Some(vm) = output.document.verification_method.first() {
-            Ok(vm.clone())
-        } else {
-            Err(DIDPeerError::KeyParsingError(
-                "Failed to convert verification_method. Reason: Missing verification_method"
-                    .to_string(),
-            ))
+        if let Content::Resource(Resource::Document(doc)) = output {
+            if let Some(vm) = doc.into_any_verification_method() {
+                let mut new_vm = vm.clone();
+                new_vm.controller = current_controller;
+                new_vm.id = current_id;
+                return Ok(new_vm);
+            }
         }
+
+        Err(DIDPeerError::KeyParsingError(
+            "Failed to convert verification_method. Reason: Missing verification_method"
+                .to_string(),
+        ))
     }
 }
 
