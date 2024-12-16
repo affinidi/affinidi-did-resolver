@@ -204,11 +204,20 @@ mod tests {
         let last_public_key_jwk = &verification_method.last().unwrap().properties["publicKeyJwk"];
         assert_eq!(first_public_key_jwk["crv"], "Ed25519");
         assert_eq!(first_public_key_jwk["kty"], "OKP");
-        assert_eq!(first_public_key_jwk["x"], "O5KzVvRLtJzv8xzpkBjaM3mmUBNF7WE_6e9tGGIM1T8");
+        assert_eq!(
+            first_public_key_jwk["x"],
+            "O5KzVvRLtJzv8xzpkBjaM3mmUBNF7WE_6e9tGGIM1T8"
+        );
         assert_eq!(last_public_key_jwk["crv"], "secp256k1");
         assert_eq!(last_public_key_jwk["kty"], "EC");
-        assert_eq!(last_public_key_jwk["x"], "K4_AlZahXcLOtqnvH45WAMUi97aqQLVs51erkqXP88w");
-        assert_eq!(last_public_key_jwk["y"], "QhrSDu7yD1ZKkHBRiuzQkiNppajd1q56Z1s_5Hi8dkA");
+        assert_eq!(
+            last_public_key_jwk["x"],
+            "K4_AlZahXcLOtqnvH45WAMUi97aqQLVs51erkqXP88w"
+        );
+        assert_eq!(
+            last_public_key_jwk["y"],
+            "QhrSDu7yD1ZKkHBRiuzQkiNppajd1q56Z1s_5Hi8dkA"
+        );
 
         assert_eq!(service.len(), 1);
         assert_eq!(service.first().unwrap().id, "did:peer:#service");
