@@ -73,7 +73,7 @@ dependencies = [
 
 [[package]]
 name = "affinidi-did-resolver-cache-sdk"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "blake2",
  "clap",
@@ -99,7 +99,7 @@ dependencies = [
 
 [[package]]
 name = "affinidi-did-resolver-cache-server"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "affinidi-did-resolver-cache-sdk",
  "axum",
@@ -124,7 +124,7 @@ dependencies = [
 
 [[package]]
 name = "affinidi-did-resolver-methods"
-version = "0.2.2"
+version = "0.2.3"
 
 [[package]]
 name = "ahash"
@@ -1530,7 +1530,7 @@ dependencies = [
 
 [[package]]
 name = "did-peer"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "askar-crypto",
  "base64 0.22.1",
