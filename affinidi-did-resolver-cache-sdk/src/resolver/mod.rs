@@ -202,7 +202,6 @@ mod tests {
         assert_eq!(verification_method.len(), 2);
         let first_public_key_jwk = &verification_method.first().unwrap().properties["publicKeyJwk"];
         let last_public_key_jwk = &verification_method.last().unwrap().properties["publicKeyJwk"];
-        assert_eq!(first_public_key_jwk, json!({}));
         assert_eq!(first_public_key_jwk["crv"], "Ed25519");
         assert_eq!(first_public_key_jwk["kty"], "OKP");
         assert_eq!(first_public_key_jwk["x"], "O5KzVvRLtJzv8xzpkBjaM3mmUBNF7WE_6e9tGGIM1T8");
