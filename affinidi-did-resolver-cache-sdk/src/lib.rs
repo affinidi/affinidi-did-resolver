@@ -229,7 +229,7 @@ impl DIDCacheClient {
     /// Will return an error if the configuration is invalid.
     ///
     /// Establishes websocket connection and sets up the cache.
-    /// using Self instead of DIDCacheClient leads to E0401 errors in dependent crates
+    // using Self instead of DIDCacheClient leads to E0401 errors in dependent crates
     pub async fn new(config: ClientConfig) -> Result<DIDCacheClient, DIDCacheError> {
         // Create the initial cache
         let cache = Cache::builder()
