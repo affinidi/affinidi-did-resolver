@@ -200,13 +200,23 @@ mod tests {
         assert_eq!(verification_relationships.key_agreement.len(), 1);
 
         assert_eq!(verification_method.len(), 2);
+        let first_public_key_jwk = &verification_method.first().unwrap().properties["publicKeyJwk"];
+        let last_public_key_jwk = &verification_method.last().unwrap().properties["publicKeyJwk"];
+        assert_eq!(first_public_key_jwk["crv"], "Ed25519");
+        assert_eq!(first_public_key_jwk["kty"], "OKP");
         assert_eq!(
-            verification_method.first().unwrap().properties["publicKeyMultibase"],
-            "z6MkiToqovww7vYtxm1xNM15u9JzqzUFZ1k7s7MazYJUyAxv"
+            first_public_key_jwk["x"],
+            "O5KzVvRLtJzv8xzpkBjaM3mmUBNF7WE_6e9tGGIM1T8"
+        );
+        assert_eq!(last_public_key_jwk["crv"], "secp256k1");
+        assert_eq!(last_public_key_jwk["kty"], "EC");
+        assert_eq!(
+            last_public_key_jwk["x"],
+            "K4_AlZahXcLOtqnvH45WAMUi97aqQLVs51erkqXP88w"
         );
         assert_eq!(
-            verification_method.last().unwrap().properties["publicKeyMultibase"],
-            "zQ3shQLqRUza6AMJFbPuMdvFRFWm1wKviQRnQSC1fScovJN4s"
+            last_public_key_jwk["y"],
+            "QhrSDu7yD1ZKkHBRiuzQkiNppajd1q56Z1s_5Hi8dkA"
         );
 
         assert_eq!(service.len(), 1);

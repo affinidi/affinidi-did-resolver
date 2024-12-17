@@ -229,7 +229,9 @@ impl DIDCacheClient {
     /// Will return an error if the configuration is invalid.
     ///
     /// Establishes websocket connection and sets up the cache.
-    pub async fn new(config: ClientConfig) -> Result<Self, DIDCacheError> {
+    // using Self instead of DIDCacheClient leads to E0401 errors in dependent crates
+    // this is due to wasm_bindgen generated code (check via `cargo expand`)
+    pub async fn new(config: ClientConfig) -> Result<DIDCacheClient, DIDCacheError> {
         // Create the initial cache
         let cache = Cache::builder()
             .max_capacity(config.cache_capacity.into())

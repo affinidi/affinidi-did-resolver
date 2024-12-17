@@ -818,7 +818,7 @@ mod test {
         let vms_after_expansion = expanded_doc.verification_method;
 
         for vm in vms_after_expansion.clone() {
-            assert!(vm.id.starts_with("did:key"));
+            assert!(vm.id.starts_with("did:peer"));
         }
         assert_eq!(vm_before_expansion.len(), vms_after_expansion.len())
     }
