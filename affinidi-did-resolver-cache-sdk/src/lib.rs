@@ -230,6 +230,7 @@ impl DIDCacheClient {
     ///
     /// Establishes websocket connection and sets up the cache.
     // using Self instead of DIDCacheClient leads to E0401 errors in dependent crates
+    // this is due to wasm_bindgen generated code (check via `cargo expand`)
     pub async fn new(config: ClientConfig) -> Result<DIDCacheClient, DIDCacheError> {
         // Create the initial cache
         let cache = Cache::builder()
