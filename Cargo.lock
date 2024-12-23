@@ -260,14 +260,14 @@ checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 
 [[package]]
 name = "askar-crypto"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39746932b19e345196a089e61a0f0175fc4d673db4b624424d8babf505e48a3d"
+checksum = "7bd248a7f6490e2e1d2296f24239c51463c441baeb03a8638a58dbb5c17b9144"
 dependencies = [
  "aead",
  "aes",
  "aes-gcm",
- "base64 0.21.7",
+ "base64 0.22.1",
  "blake2",
  "block-modes",
  "bls12_381",
@@ -4492,9 +4492,9 @@ dependencies = [
 
 [[package]]
 name = "serde-json-core"
-version = "0.5.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c9e1ab533c0bc414c34920ec7e5f097101d126ed5eac1a1aac711222e0bbb33"
+checksum = "5b81787e655bd59cecadc91f7b6b8651330b2be6c33246039a65e5cd6f4e0828"
 dependencies = [
  "ryu",
  "serde",
