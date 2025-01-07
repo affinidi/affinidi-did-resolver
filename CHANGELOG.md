@@ -2,6 +2,11 @@
 
 ## Changelog history
 
+### 7th January 2025 (release 0.2.4)
+
+* Updating crates
+  * Updated Axum framework from 0.7.x to 0.8.x
+
 ### 13th November 2024 (release 0.2.1)
 
 * Updating crates

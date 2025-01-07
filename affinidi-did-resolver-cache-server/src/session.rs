@@ -1,6 +1,5 @@
 use crate::{common::create_session_id, errors::ErrorResponse, SharedData};
 use axum::{
-    async_trait,
     extract::{FromRef, FromRequestParts},
     http::{request::Parts, StatusCode},
     response::{IntoResponse, Response},
@@ -50,7 +49,6 @@ pub struct Session {
     pub session_id: String, // Unique session transaction ID
 }
 
-#[async_trait]
 impl<S> FromRequestParts<S> for Session
 where
     SharedData: FromRef<S>,
