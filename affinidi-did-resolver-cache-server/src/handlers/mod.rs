@@ -15,7 +15,7 @@ pub fn application_routes(shared_data: &SharedData, config: &Config) -> Router {
 
     if config.enable_http_endpoint {
         info!("Enabling HTTP Resolver endpoint");
-        app = app.route("/resolve/:did", get(http::resolver_handler));
+        app = app.route("/resolve/{did}", get(http::resolver_handler));
     }
 
     Router::new()

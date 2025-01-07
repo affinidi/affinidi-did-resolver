@@ -2,7 +2,6 @@ use std::{fmt::Debug, sync::Arc};
 
 use affinidi_did_resolver_cache_sdk::DIDCacheClient;
 use axum::{
-    async_trait,
     extract::{FromRef, FromRequestParts},
     http::request::Parts,
 };
@@ -26,7 +25,6 @@ pub struct SharedData {
     pub resolver: DIDCacheClient,
 }
 
-#[async_trait]
 impl<S> FromRequestParts<S> for SharedData
 where
     Self: FromRef<S>,

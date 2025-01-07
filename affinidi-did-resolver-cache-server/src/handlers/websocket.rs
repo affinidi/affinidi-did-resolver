@@ -74,7 +74,7 @@ async fn handle_socket(mut socket: WebSocket, state: SharedData) {
                                         stats.increment_did_method_success(response.method);
                                         drop(stats);
                                         info!("resolved DID: ({}) cache_hit?({})", response.did, response.cache_hit);
-                                        if let Err(e) = socket.send(Message::Text(serde_json::to_string(&message).unwrap())).await {
+                                        if let Err(e) = socket.send(Message::Text(serde_json::to_string(&message).unwrap().into())).await {
                                             warn!("ws: Error sending response: {:?}", e);
                                             break;
                                         } else {
@@ -88,7 +88,7 @@ async fn handle_socket(mut socket: WebSocket, state: SharedData) {
                                         let did_hash = format!("{:x}", hasher.finalize());
                                         warn!("Couldn't resolve DID: ({}) Reason: {}", &request.did, e);
                                         state.stats().await.increment_resolver_error();
-                                        if let Err(e) = socket.send(Message::Text(serde_json::to_string(&WSResponseType::Error(WSResponseError {did: request.did, hash: did_hash, error: e.to_string()})).unwrap())).await {
+                                        if let Err(e) = socket.send(Message::Text(serde_json::to_string(&WSResponseType::Error(WSResponseError {did: request.did, hash: did_hash, error: e.to_string()})).unwrap().into())).await {
                                             warn!("ws: Error sending error response: {:?}", e);
                                             break;
                                         }

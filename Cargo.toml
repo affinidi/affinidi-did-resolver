@@ -8,7 +8,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 authors = ["Glenn Gore <glenn@affinidi.com>"]
 description = "Affinidi DID Resolver"
@@ -22,7 +22,7 @@ repository = "https://github.com/affinidi/affinidi-did-resolver"
 [workspace.dependencies]
 
 # Common Dependencies
-moka = { version = "0.12.8", features = ["future"] }
+moka = { version = "0.12", features = ["future"] }
 rand = "0.8"
 regex = "1.11"
 serde = { version = "1.0", features = ["derive", "rc"] }
@@ -37,8 +37,8 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # Cache Server
 affinidi-did-resolver-cache-sdk = { version = "0.2", path = "./affinidi-did-resolver-cache-sdk" }
 did-peer = { version = "0.2", path = "./affinidi-did-resolver-methods/did-peer" }
-axum = { version = "0.7", features = ["ws"] }
-axum-extra = { version = "0.9", features = ["typed-header"] }
+axum = { version = "0.8", features = ["ws"] }
+axum-extra = { version = "0.10", features = ["typed-header"] }
 axum-server = { version = "0.7", features = ["tls-rustls"] }
 chrono = "0.4"
 http = "1"
@@ -47,14 +47,14 @@ tower-http = { version = "0.6", features = ["cors", "trace"] }
 
 # Cache Client (SDK)
 futures-util = "0.3"
-tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
+tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
 rayon = "1.10"
 num-format = "0.4.4"
 clap = { version = "4.5", features = ["derive"] }
 number_prefix = "0.4"
 
 # DID methods
-askar-crypto = { version = "0.3.1", features = ["alloc"] }
+askar-crypto = { version = "0.3", features = ["alloc"] }
 base64 = "0.22"
 iref = { version = "3.2.2", features = ["serde"] }
 multibase = "0.9.1"
