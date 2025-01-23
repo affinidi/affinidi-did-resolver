@@ -29,8 +29,3 @@ wasm-bindgen-futures.workspace = true
 askar-crypto.workspace = true
 tokio.workspace = true
 multibase.workspace = true
-
-[profile.release]
-# Tell `rustc` to optimize for small code size.
-opt-level = "s"
-lto = true

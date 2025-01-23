@@ -1,0 +1,19 @@
+[package]
+name = "did-example"
+version.workspace = true
+description = "Implementation of did:example in Rust"
+repository.workspace = true
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+publish.workspace = true
+license.workspace = true
+readme = "README.md"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+ssi.workspace = true
+thiserror.workspace = true

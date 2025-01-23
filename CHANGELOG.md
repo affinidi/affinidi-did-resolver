@@ -2,6 +2,11 @@
 
 ## Changelog history
 
+### 23rd January 2025 (release 0.2.5)
+
+* Updating crates
+* Added did:example method to help with local development/testing
+
 ### 7th January 2025 (release 0.2.4)
 
 * Updating crates
