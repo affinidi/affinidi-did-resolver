@@ -6,12 +6,15 @@ You can use this SDK in either local (resolving occurs locally) or in network (r
 
 ## Supported DID Methods
 
-  1. did:key
-  2. did:ethr
-  3. did:jwk
-  4. did.pkh
-  5. did.peer
-  6. did.web
+- did:key
+- did:ethr
+- did:jwk
+- did:pkh
+- did:peer
+- did:web
+- did:example
+  - NOTE: This is enabled using Rust feature `did:example`
+  - NOTE: did:example must be manually loaded into the resolver as the DID DOC is NOT deterministic!
 
 ## Prerequisites
 

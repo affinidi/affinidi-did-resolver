@@ -19,10 +19,12 @@ crate-type = ["rlib", "cdylib"]
 default = ["local"]
 local = []
 network = ["dep:tokio-tungstenite"]
+did_example = ["dep:did-example"]
 
 [dependencies]
 blake2.workspace = true
 did-peer.workspace = true
+did-example = { workspace = true, optional = true }
 futures-util.workspace = true
 moka.workspace = true
 rand.workspace = true
@@ -43,7 +45,3 @@ clap.workspace = true
 num-format.workspace = true
 number_prefix.workspace = true
 rayon.workspace = true
-
-[profile.release]
-lto = true
-opt-level = "s"

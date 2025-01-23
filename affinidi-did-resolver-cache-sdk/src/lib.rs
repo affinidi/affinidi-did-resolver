@@ -53,6 +53,7 @@ pub enum DIDMethod {
     PEER,
     PKH,
     WEB,
+    EXAMPLE,
 }
 
 /// Helper function to convert a DIDMethod to a string
@@ -65,6 +66,7 @@ impl fmt::Display for DIDMethod {
             DIDMethod::PEER => write!(f, "peer"),
             DIDMethod::PKH => write!(f, "pkh"),
             DIDMethod::WEB => write!(f, "web"),
+            DIDMethod::EXAMPLE => write!(f, "example"),
         }
     }
 }
@@ -89,6 +91,8 @@ impl TryFrom<&str> for DIDMethod {
             "peer" => Ok(DIDMethod::PEER),
             "pkh" => Ok(DIDMethod::PKH),
             "web" => Ok(DIDMethod::WEB),
+            #[cfg(feature = "did_example")]
+            "example" => Ok(DIDMethod::EXAMPLE),
             _ => Err(DIDCacheError::UnsupportedMethod(value.to_string())),
         }
     }
@@ -118,6 +122,8 @@ pub struct DIDCacheClient {
     network_task_tx: Option<mpsc::Sender<WSCommands>>,
     #[cfg(feature = "network")]
     network_task_rx: Option<Arc<Mutex<mpsc::Receiver<WSCommands>>>>,
+    #[cfg(feature = "did_example")]
+    did_example_cache: did_example::DiDExampleCache,
 }
 
 impl DIDCacheClient {
@@ -137,10 +143,6 @@ impl DIDCacheClient {
             )));
         }
 
-        let mut hasher = Blake2s256::new();
-        hasher.update(did);
-        let did_hash = format!("{:x}", hasher.finalize());
-
         let parts: Vec<&str> = did.split(':').collect();
         if parts.len() < 3 {
             return Err(DIDCacheError::DIDError(format!(
@@ -156,6 +158,24 @@ impl DIDCacheClient {
                 self.config.max_did_parts,
                 parts.len()
             )));
+        }
+
+        let mut hasher = Blake2s256::new();
+        hasher.update(did);
+        let did_hash = format!("{:x}", hasher.finalize());
+
+        #[cfg(feature = "did_example")]
+        // Short-circuit for example DIDs
+        if parts[1] == "example" {
+            if let Some(doc) = self.did_example_cache.get(did) {
+                return Ok(ResolveResponse {
+                    did: did.to_string(),
+                    method: parts[1].try_into()?,
+                    did_hash: did_hash,
+                    doc: doc.clone(),
+                    cache_hit: true,
+                });
+            }
         }
 
         // Check if the DID is in the cache
@@ -244,9 +264,16 @@ impl DIDCacheClient {
             cache,
             network_task_tx: None,
             network_task_rx: None,
+            #[cfg(feature = "did_example")]
+            did_example_cache: did_example::DiDExampleCache::new(),
         };
         #[cfg(not(feature = "network"))]
-        let client = Self { config, cache };
+        let client = Self {
+            config,
+            cache,
+            #[cfg(feature = "did_example")]
+            did_example_cache: did_example::DiDExampleCache::new(),
+        };
 
         #[cfg(feature = "network")]
         {
@@ -288,6 +315,13 @@ impl DIDCacheClient {
                 err
             ))),
         }
+    }
+
+    #[cfg(feature = "did_example")]
+    pub fn add_example_did(&mut self, doc: &str) -> Result<(), DIDCacheError> {
+        self.did_example_cache
+            .insert_from_string(doc)
+            .map_err(|e| DIDCacheError::DIDError(format!("Couldn't parse example DID: {}", e)))
     }
 }
 
