@@ -239,6 +239,15 @@ impl DIDCacheClient {
         let did_hash = format!("{:x}", hasher.finalize());
         self.cache.remove(&did_hash).await
     }
+
+    /// Add a DID Document to the cache manually
+    pub async fn add_did_document(&mut self, did: &str, doc: Document) {
+        let mut hasher = Blake2s256::new();
+        hasher.update(did);
+        let did_hash = format!("{:x}", hasher.finalize());
+        debug!("manually adding did ({}) hash({}) to cache", did, did_hash);
+        self.cache.insert(did_hash, doc).await;
+    }
 }
 
 /// Following are the WASM bindings for the DIDCacheClient

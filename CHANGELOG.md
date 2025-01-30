@@ -2,6 +2,12 @@
 
 ## Changelog history
 
+### 30th January 2025 (release 0.2.8)
+
+* FEATURE: add_did_document() added to manually load DID Documents into the cache.
+  * Can be used when you want to pre-load a DID Document or for testing purposes load non-public documents
+* MAINTENANCE: Crates updated (rand 0.8 --> 0.9)
+
 ### 23rd January 2025 (release 0.2.5)
 
 * Updating crates

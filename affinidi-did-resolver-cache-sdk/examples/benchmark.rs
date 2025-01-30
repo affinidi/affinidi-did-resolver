@@ -49,10 +49,16 @@ async fn main() -> Result<(), DIDCacheError> {
     // use that subscriber to process traces emitted after this point
     tracing::subscriber::set_global_default(subscriber).expect("Logging failed, exiting...");
 
+    #[allow(unused_mut)]
     let mut cache_config = ClientConfigBuilder::default();
-    if let Some(address) = &args.network_address {
-        println!("Running in network mode with address: {}", address);
-        cache_config = cache_config.with_network_mode(address);
+    if let Some(_address) = &args.network_address {
+        #[cfg(feature = "network")]
+        {
+            println!("Running in network mode with address: {}", _address);
+            cache_config = cache_config.with_network_mode(_address);
+        }
+        #[cfg(not(feature = "network"))]
+        panic!("Network mode is not enabled in this build. Enable feature `network` to use network mode.");
     } else {
         println!("Running in local mode.");
     }
@@ -161,9 +167,10 @@ async fn resolve_dids_no_cache(dids: Arc<Vec<String>>, count: u32) -> Result<(),
     let mut handles = Vec::new();
 
     let _start = std::time::Instant::now();
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     for _ in 0..count {
-        let r: usize = rng.gen::<usize>() % dids_len;
+        let r: u32 = rng.random();
+        let r: usize = r as usize % dids_len;
         let _dids = dids.clone();
 
         //let _cache = cache.clone();
@@ -207,10 +214,10 @@ async fn resolve_dids(
     let mut handles = Vec::new();
 
     let _start = std::time::Instant::now();
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     for _ in 0..count {
-        let r: usize = rng.gen::<usize>() % dids_len;
+        let r: usize = rng.random::<u32>() as usize % dids_len;
         let _dids = dids.clone();
 
         let _cache = cache.clone();
