@@ -5,7 +5,7 @@
 //!
 
 use network::WSCommands;
-use rand::{distributions::Alphanumeric, Rng};
+use rand::{distr::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
 use ssi::dids::Document;
 use tokio::{select, sync::oneshot};
@@ -75,7 +75,7 @@ impl DIDCacheClient {
             let (tx, rx) = oneshot::channel::<WSCommands>();
 
             // create a 8-char unique-id for this request
-            let unique_id: String = rand::thread_rng()
+            let unique_id: String = rand::rng()
             .sample_iter(&Alphanumeric)
             .take(8)
             .map(char::from)
