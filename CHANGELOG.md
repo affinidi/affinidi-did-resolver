@@ -2,6 +2,11 @@
 
 ## Changelog history
 
+### 12th February 2025 (release 0.2.9)
+
+* FIX: SDK Network loop would not exit when the MPSC Channel was closed.
+* MAINTENANCE: Crates updated
+
 ### 30th January 2025 (release 0.2.8)
 
 * FEATURE: add_did_document() added to manually load DID Documents into the cache.

@@ -23,7 +23,7 @@ use tokio::{
 };
 #[cfg(feature = "network")]
 use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
-use tracing::{debug, error, span, warn, Instrument, Level};
+use tracing::{debug, error, info, span, warn, Instrument, Level};
 
 use super::{request_queue::RequestList, WSResponseType};
 
@@ -121,6 +121,12 @@ impl NetworkTask {
                                     debug!("Invalid command received: {:?}", cmd);
                                 }
                             }
+                        } else {
+                            // MPSC Channel has closed, no real recovery can be done here
+                            // exit the task
+                            info!("SDK channel closed");
+                            return Ok(());
+
                         }
                     }
                 }
