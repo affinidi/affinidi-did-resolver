@@ -6,11 +6,11 @@ members = [
     "affinidi-did-resolver-cache-server",
     "affinidi-did-resolver-methods",
 ]
-resolver = "2"
+resolver = "3"
 
 [workspace.package]
-version = "0.2.9"
-edition = "2021"
+version = "0.3.0"
+edition = "2024"
 authors = ["Glenn Gore <glenn@affinidi.com>"]
 description = "Affinidi DID Resolver"
 readme = "README.md"
@@ -36,9 +36,9 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Cache Server
-affinidi-did-resolver-cache-sdk = { version = "0.2.9", path = "./affinidi-did-resolver-cache-sdk" }
-did-peer = { version = "0.2.9", path = "./affinidi-did-resolver-methods/did-peer" }
-did-example = { version = "0.2.9", path = "./affinidi-did-resolver-methods/did-example" }
+affinidi-did-resolver-cache-sdk = { version = "0.3", path = "./affinidi-did-resolver-cache-sdk" }
+did-peer = { version = "0.3", path = "./affinidi-did-resolver-methods/did-peer" }
+did-example = { version = "0.3", path = "./affinidi-did-resolver-methods/did-example" }
 axum = { version = "0.8", features = ["ws"] }
 axum-extra = { version = "0.10", features = ["typed-header"] }
 axum-server = { version = "0.7", features = ["tls-rustls"] }
@@ -48,12 +48,20 @@ toml = "0.8"
 tower-http = { version = "0.6", features = ["cors", "trace"] }
 
 # Cache Client (SDK)
-futures-util = "0.3"
-tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
-rayon = "1.10"
-num-format = "0.4.4"
 clap = { version = "4.5", features = ["derive"] }
+futures-util = "0.3"
+num-format = "0.4.4"
 number_prefix = "0.4"
+rayon = "1.10"
+rustls = { version = "0.23", default-features = false, features = [
+    "aws_lc_rs",
+    "tls12",
+] }
+rustls-platform-verifier = "0.5"
+sha1 = "0.10"
+tokio-rustls = "0.26"
+url = "2.5"
+web-socket = "0.7"
 
 # DID methods
 askar-crypto = { version = "0.3", features = ["alloc"] }

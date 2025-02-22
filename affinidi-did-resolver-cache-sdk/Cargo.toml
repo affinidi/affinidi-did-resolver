@@ -17,27 +17,41 @@ crate-type = ["rlib", "cdylib"]
 [features]
 default = ["local"]
 local = []
-network = ["dep:tokio-tungstenite"]
+network = [
+    "dep:web-socket",
+    "dep:url",
+    "dep:sha1",
+    "dep:base64",
+    "dep:tokio-rustls",
+    "dep:rustls",
+    "dep:rustls-platform-verifier",
+]
 did_example = ["dep:did-example"]
 
 [dependencies]
+base64 = { workspace = true, optional = true }
 blake2.workspace = true
 did-peer.workspace = true
 did-example = { workspace = true, optional = true }
 futures-util.workspace = true
 moka.workspace = true
 rand.workspace = true
+rustls = { workspace = true, optional = true }
+rustls-platform-verifier = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true
 serde-wasm-bindgen.workspace = true
+sha1 = { workspace = true, optional = true }
 ssi.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
-tokio-tungstenite = { workspace = true, optional = true }
+tokio-rustls = { workspace = true, optional = true }
 tracing.workspace = true
 tracing-subscriber.workspace = true
+url = { workspace = true, optional = true }
 wasm-bindgen.workspace = true
 wasm-bindgen-futures.workspace = true
+web-socket = { workspace = true, optional = true }
 
 [dev-dependencies]
 clap.workspace = true

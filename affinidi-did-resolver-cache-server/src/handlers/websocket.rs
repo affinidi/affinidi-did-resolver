@@ -3,14 +3,14 @@ use affinidi_did_resolver_cache_sdk::networking::{
 };
 use axum::{
     extract::{
-        ws::{Message, WebSocket},
         State, WebSocketUpgrade,
+        ws::{Message, WebSocket},
     },
     response::IntoResponse,
 };
 use blake2::{Blake2s256, Digest};
 use tokio::select;
-use tracing::{debug, info, span, warn, Instrument};
+use tracing::{Instrument, debug, info, span, warn};
 
 use crate::SharedData;
 
@@ -50,52 +50,111 @@ async fn handle_socket(mut socket: WebSocket, state: SharedData) {
             select! {
                 value = socket.recv() => {
                     if let Some(msg) = value {
-                        if let Ok(msg) = msg {
-                            if let Message::Text(msg) = msg {
-                                debug!("ws: Received text message: {:?}", msg);
-                                let request: WSRequest = match serde_json::from_str(&msg) {
-                                    Ok(request) => request,
-                                    Err(e) => {
-                                        warn!("ws: Error parsing message: {:?}", e);
+                        match msg {
+                            Ok(msg) => {
+                                match msg {
+                                    Message::Text(msg) => {
+                                        debug!("ws: Received text message: {:?}", msg);
+                                        let request: WSRequest = match serde_json::from_str(&msg) {
+                                            Ok(request) => request,
+                                            Err(e) => {
+                                                warn!("ws: Error parsing message: {:?}", e);
+                                                break;
+                                            }
+                                        };
+
+                                        match state.resolver.resolve(&request.did).await {
+                                            Ok(response) => {
+                                                let message = WSResponseType::Response(WSResponse {
+                                                    did: response.did.clone(),
+                                                    hash: response.did_hash,
+                                                    document: response.doc,
+                                                });
+                                                let mut stats = state.stats().await;
+                                                stats.increment_resolver_success();
+                                                if response.cache_hit { stats.increment_cache_hit();}
+                                                stats.increment_did_method_success(response.method);
+                                                drop(stats);
+                                                info!("resolved DID: ({}) cache_hit?({})", response.did, response.cache_hit);
+                                                if let Err(e) = socket.send(Message::Text(serde_json::to_string(&message).unwrap().into())).await {
+                                                    warn!("ws: Error sending response: {:?}", e);
+                                                    break;
+                                                } else {
+                                                    debug!("Sent response: {:?}", message);
+                                                }
+                                            }
+                                            Err(e) => {
+                                                // Couldn't resolve the DID, send an error back
+                                                let mut hasher = Blake2s256::new();
+                                                hasher.update(request.did.clone());
+                                                let did_hash = format!("{:x}", hasher.finalize());
+                                                warn!("Couldn't resolve DID: ({}) Reason: {}", &request.did, e);
+                                                state.stats().await.increment_resolver_error();
+                                                if let Err(e) = socket.send(Message::Text(serde_json::to_string(&WSResponseType::Error(WSResponseError {did: request.did, hash: did_hash, error: e.to_string()})).unwrap().into())).await {
+                                                    warn!("ws: Error sending error response: {:?}", e);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Message::Binary(msg) => {
+                                        debug!("ws: Received binary message: {:?}", msg);
+                                        let request: WSRequest = match serde_json::from_slice(msg.as_ref()) {
+                                            Ok(request) => request,
+                                            Err(e) => {
+                                                warn!("ws: Error parsing message: {:?}", e);
+                                                break;
+                                            }
+                                        };
+
+                                        match state.resolver.resolve(&request.did).await {
+                                            Ok(response) => {
+                                                let message = WSResponseType::Response(WSResponse {
+                                                    did: response.did.clone(),
+                                                    hash: response.did_hash,
+                                                    document: response.doc,
+                                                });
+                                                let mut stats = state.stats().await;
+                                                stats.increment_resolver_success();
+                                                if response.cache_hit { stats.increment_cache_hit();}
+                                                stats.increment_did_method_success(response.method);
+                                                drop(stats);
+                                                info!("resolved DID: ({}) cache_hit?({})", response.did, response.cache_hit);
+                                                if let Err(e) = socket.send(Message::Text(serde_json::to_string(&message).unwrap().into())).await {
+                                                    warn!("ws: Error sending response: {:?}", e);
+                                                    break;
+                                                } else {
+                                                    debug!("Sent response: {:?}", message);
+                                                }
+                                            }
+                                            Err(e) => {
+                                                // Couldn't resolve the DID, send an error back
+                                                let mut hasher = Blake2s256::new();
+                                                hasher.update(request.did.clone());
+                                                let did_hash = format!("{:x}", hasher.finalize());
+                                                warn!("Couldn't resolve DID: ({}) Reason: {}", &request.did, e);
+                                                state.stats().await.increment_resolver_error();
+                                                if let Err(e) = socket.send(Message::Text(serde_json::to_string(&WSResponseType::Error(WSResponseError {did: request.did, hash: did_hash, error: e.to_string()})).unwrap().into())).await {
+                                                    warn!("ws: Error sending error response: {:?}", e);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Message::Ping(_) => {
+                                        // Don't need to do anything, the library will automatically respond with a pong
+                                    }
+                                    Message::Pong(_) => {
+                                        // Don't need to do anything
+                                    }
+                                    Message::Close(_) => {
+                                        debug!("Received close message, closing connection");
                                         break;
                                     }
-                                };
-
-                                match state.resolver.resolve(&request.did).await {
-                                    Ok(response) => {
-                                        let message = WSResponseType::Response(WSResponse {
-                                            did: response.did.clone(),
-                                            hash: response.did_hash,
-                                            document: response.doc,
-                                        });
-                                        let mut stats = state.stats().await;
-                                        stats.increment_resolver_success();
-                                        if response.cache_hit { stats.increment_cache_hit();}
-                                        stats.increment_did_method_success(response.method);
-                                        drop(stats);
-                                        info!("resolved DID: ({}) cache_hit?({})", response.did, response.cache_hit);
-                                        if let Err(e) = socket.send(Message::Text(serde_json::to_string(&message).unwrap().into())).await {
-                                            warn!("ws: Error sending response: {:?}", e);
-                                            break;
-                                        } else {
-                                            debug!("Sent response: {:?}", message);
-                                        }
-                                    }
-                                    Err(e) => {
-                                        // Couldn't resolve the DID, send an error back
-                                        let mut hasher = Blake2s256::new();
-                                        hasher.update(request.did.clone());
-                                        let did_hash = format!("{:x}", hasher.finalize());
-                                        warn!("Couldn't resolve DID: ({}) Reason: {}", &request.did, e);
-                                        state.stats().await.increment_resolver_error();
-                                        if let Err(e) = socket.send(Message::Text(serde_json::to_string(&WSResponseType::Error(WSResponseError {did: request.did, hash: did_hash, error: e.to_string()})).unwrap().into())).await {
-                                            warn!("ws: Error sending error response: {:?}", e);
-                                            break;
-                                        }
-                                    }
                                 }
-                            } else {
-                                warn!("Received non-text message, ignoring");
+                            }
+                            Err(err) => {
+                                warn!("Error receiving message: {:?}", err);
                                 continue;
                             }
                         }
