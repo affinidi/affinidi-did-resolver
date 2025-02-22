@@ -89,7 +89,7 @@ You will need to enable the crate feature `network` to use Network Mode.
 
 A reference benchmark example is included that can be used to measure performance. To run this use the following:
 
-`cargo run --example benchmark -- -g 1000 -r 10000 -n ws://127.0.0.1:8080/did/v1/ws`
+`cargo run --features network --example benchmark -- -g 1000 -r 10000 -n ws://127.0.0.1:8080/did/v1/ws`
 
 Run the above from the $affinidi-did-resolver/affinidi-did-resolver-cache-sdk directory
 

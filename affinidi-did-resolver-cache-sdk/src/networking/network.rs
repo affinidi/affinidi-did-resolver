@@ -6,26 +6,25 @@
 //! The remote server communicates via a websocket connection.
 //!
 
-use std::time::Duration;
-
-use crate::{config::ClientConfig, errors::DIDCacheError, WSRequest};
+use super::{WSResponseType, request_queue::RequestList};
+use crate::{config::ClientConfig, errors::DIDCacheError, networking::utils::connect, WSRequest};
 use blake2::{Blake2s256, Digest};
-use futures_util::{SinkExt, StreamExt};
 use ssi::dids::Document;
+use std::{pin::Pin, time::Duration};
 use tokio::{
-    net::TcpStream,
+    io::{AsyncRead, AsyncWrite, BufReader},
     select,
     sync::{
         mpsc::{Receiver, Sender},
         oneshot,
     },
-    time::sleep,
+    time::{interval_at, sleep},
 };
+use tracing::{Instrument, Level, debug, error, info, span, warn};
 #[cfg(feature = "network")]
-use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
-use tracing::{debug, error, info, span, warn, Instrument, Level};
-
-use super::{request_queue::RequestList, WSResponseType};
+use web_socket::{CloseCode, DataType, Event, MessageType, WebSocket};
+#[cfg(feature = "network")]
+use url::Url;
 
 /// WSCommands are the commands that can be sent between the SDK and the network task
 /// Connected: Signals that the websocket is connected
@@ -47,6 +46,10 @@ pub(crate) enum WSCommands {
 
 pub(crate) type Responder = oneshot::Sender<WSCommands>;
 
+/// The following is to help with handling either TCP or TLS connections
+pub(crate) trait ReadWrite: AsyncRead + AsyncWrite + Send {}
+impl<T> ReadWrite for T where T: AsyncRead + AsyncWrite + Send {}
+
 /// NetworkTask handles the communication with the network.
 /// This runs as a separate task in the background.
 ///
@@ -54,7 +57,6 @@ pub(crate) type Responder = oneshot::Sender<WSCommands>;
 /// sdk_rx_channel: Rc<Receiver<WSCommands>> - Channel to receive commands from the network task
 /// task_rx_channel: Rc<Receiver<WSCommands>> - PRIVATE. Channel to receive commands from the SDK
 /// task_tx_channel: Sender<WSCommands> - PRIVATE. Channel to send commands to the SDK
-/// websocket: Option<Rc<WebSocketStream<MaybeTlsStream<TcpStream>>>> - PRIVATE. The websocket connection itself
 pub(crate) struct NetworkTask {
     config: ClientConfig,
     service_address: String,
@@ -89,15 +91,68 @@ impl NetworkTask {
                 sdk_tx: sdk_tx.clone(),
             };
 
-            let mut websocket = network_task.ws_connect().await?;
+            let mut web_socket = network_task.ws_connect().await?;
+            let mut watchdog = interval_at(tokio::time::Instant::now()+Duration::from_secs(20), Duration::from_secs(20));
+            
+            let mut missed_pings = 0;
 
             loop {
                 select! {
-                    value = websocket.next() => {
-                        if network_task.ws_recv(value).is_err() {
-                            // Reset the connection
-                            websocket = network_task.ws_connect().await?;
+                    _ = watchdog.tick() => {
+                        let _ = web_socket.send_ping(vec![]).await;
+                        if missed_pings > 2 {
+                            warn!("Missed 3 pings, restarting connection");
+                            let _ = web_socket.close(CloseCode::ProtocolError).await;
+                            missed_pings = 0;
+                            web_socket = network_task.ws_connect().await?;
+                        } else {
+                            missed_pings += 1;
                         }
+                    }
+                    value = web_socket.recv() => {
+                        match value {
+                            Ok(event) =>
+                                match event {
+                                    Event::Data { ty, data } => {
+                                        let request = match ty {
+                                            DataType::Complete(MessageType::Text) => String::from_utf8_lossy(&data),
+                                            DataType::Complete(MessageType::Binary) => String::from_utf8_lossy(&data),
+                                            DataType::Stream(_) => {
+                                                warn!("Received stream - not handled");
+                                                continue;
+                                            }
+                                        };
+
+                                        debug!("Received DID Lookup request ({})", request);
+                                        if network_task.ws_recv(request.to_string()).is_err() {
+                                            // Reset the connection
+                                            web_socket = network_task.ws_connect().await?;
+                                        }
+                                    }
+                                    Event::Ping(data) => {
+                                        let _ = web_socket.send_pong(data).await;
+                                    }
+                                    Event::Pong(..) => {
+                                        missed_pings -= 1;
+                                    }
+                                    Event::Error(err) => {
+                                        warn!("WebSocket Error: {}", err);
+                                        let _ = web_socket.close(CloseCode::ProtocolError).await;
+                                        web_socket = network_task.ws_connect().await?;
+                                        missed_pings = 0;
+                                    }
+                                    Event::Close { .. } => {
+                                        web_socket = network_task.ws_connect().await?;
+                                        missed_pings = 0;
+                                    }
+                                }
+                                Err(err) => {
+                                    error!("Error receiving websocket message: {:?}", err);
+                                    let _ = web_socket.close(CloseCode::ProtocolError).await;
+                                    web_socket = network_task.ws_connect().await?;
+                                    missed_pings = 0;
+                                }
+                            }
                     },
                     value = sdk_rx.recv(), if !network_task.cache.is_full() => {
                         if let Some(cmd) = value {
@@ -107,7 +162,7 @@ impl NetworkTask {
                                     hasher.update(request.did.clone());
                                     let did_hash = format!("{:x}", hasher.finalize());
                                     if network_task.cache.insert(did_hash, &uid, channel) {
-                                        let _ = network_task.ws_send(&mut websocket, &request).await;
+                                        let _ = network_task.ws_send(&mut web_socket, &request).await;
                                     }
                                 }
                                 WSCommands::TimeOut(uid, did_hash) => {
@@ -140,8 +195,10 @@ impl NetworkTask {
     /// If timeouts or errors occur, it will backoff and retry
     /// NOTE: Increases in 5 second increments up to 60 seconds
     async fn ws_connect(
-        &self,
-    ) -> Result<WebSocketStream<MaybeTlsStream<TcpStream>>, DIDCacheError> {
+        &mut self,
+    ) -> Result<WebSocket<BufReader<Pin<Box<dyn ReadWrite>>>>, DIDCacheError> {
+
+        //accept_key_from(sec_ws_key);
         async fn _handle_backoff(backoff: Duration) -> Duration {
             let b = if backoff.as_secs() < 60 {
                 backoff.saturating_add(Duration::from_secs(5))
@@ -160,14 +217,14 @@ impl NetworkTask {
             let mut backoff = Duration::from_secs(1);
             loop {
                 debug!("Starting websocket connection");
-
-                let connection = connect_async(&self.service_address);
+                
                 let timeout = tokio::time::sleep(self.config.network_timeout);
+                let connection = self._create_socket();
 
                 select! {
                     conn = connection => {
                         match conn {
-                            Ok((conn, _)) => {
+                            Ok(conn) => {
                                 debug!("Websocket connected");
                                 self.sdk_tx.send(WSCommands::Connected).await.unwrap();
                                 return Ok(conn)
@@ -190,14 +247,46 @@ impl NetworkTask {
         .await
     }
 
+    // Responsible for creating a websocket connection to the mediator
+    async fn _create_socket(
+        &mut self,
+    ) -> Result<WebSocket<BufReader<Pin<Box<dyn ReadWrite>>>>, DIDCacheError>  {
+
+        debug!("Creating websocket connection");
+        // Create a custom websocket request, turn this into a client_request
+        // Allows adding custom headers later
+
+        let url = match Url::parse(&self.service_address) {
+            Ok(url) => url,
+            Err(err) => {
+                error!("Invalid ServiceEndpoint address {}: {}", self.service_address, err);
+                return Err(DIDCacheError::TransportError(format!("Invalid ServiceEndpoint address {}: {}", self.service_address, err)));
+            }
+        };
+
+        
+        let web_socket = match connect(&url).await {
+            Ok(web_socket) => web_socket,
+            Err(err) => {
+                warn!("WebSocket failed. Reason: {}", err);
+                return Err(DIDCacheError::TransportError(format!("Websocket connection failed: {}", err)));
+            }
+        };
+       
+
+        debug!("Completed websocket connection");
+
+        Ok(web_socket)
+    }
+
     /// Sends the request to the remote server via the websocket
     async fn ws_send(
         &self,
-        websocket: &mut WebSocketStream<MaybeTlsStream<TcpStream>>,
+        websocket: &mut WebSocket<BufReader<Pin<Box<dyn ReadWrite>>>>,
         request: &WSRequest,
     ) -> Result<(), DIDCacheError> {
         match websocket
-            .send(serde_json::to_string(request).unwrap().into())
+            .send(serde_json::to_string(request).unwrap().as_str())
             .await
         {
             Ok(_) => {
@@ -214,13 +303,9 @@ impl NetworkTask {
     /// Processes inbound websocket messages from the remote server
     fn ws_recv(
         &mut self,
-        message: Option<Result<Message, tokio_tungstenite::tungstenite::Error>>,
+        message: String,
     ) -> Result<(), DIDCacheError> {
-        if let Some(response) = message {
-            match response {
-                Ok(msg) => {
-                    if let Message::Text(msg) = msg {
-                        let response: Result<WSResponseType, _> = serde_json::from_str(&msg);
+                        let response: Result<WSResponseType, _> = serde_json::from_str(&message);
                         match response {
                             Ok(WSResponseType::Response(response)) => {
                                 debug!("Received response: {:?}", response.hash);
@@ -254,22 +339,6 @@ impl NetworkTask {
                                 warn!("Error parsing message: {:?}", e);
                             }
                         }
-                    } else {
-                        warn!("Received non-text message, ignoring: {}", msg);
-                    }
-                }
-                Err(e) => {
-                    // Can't receive messages, reset the connection
-                    error!("Error receiving message: {:?}", e);
-                    return Err(DIDCacheError::TransportError(format!(
-                        "Error receiving message: {:?}",
-                        e
-                    )));
-                }
-            }
-        } else {
-            warn!("No message received");
-        }
 
         Ok(())
     }

@@ -27,6 +27,7 @@ serde_json.workspace = true
 ssi.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
+tokio-rustls.workspace = true
 toml.workspace = true
 tower-http.workspace = true
 tracing.workspace = true

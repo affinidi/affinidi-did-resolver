@@ -2,6 +2,14 @@
 
 ## Changelog history
 
+### 22nd February 2025 (release 0.3.0)
+
+* MAINTENANCE: Rust 2024 Edition enabled by default (2021 --> 2024)
+* MAINTENANCE: Crates updated
+* UPDATE: affinidi-did-resolver-cache-sdk
+  * tokio-tungstenite removed and replaced via web-socket crate
+  * Enables better low level error handling of the WebSocket. Especially when a device sleeps and detecting the WebSocket Channel has been closed.
+
 ### 12th February 2025 (release 0.2.9)
 
 * FIX: SDK Network loop would not exit when the MPSC Channel was closed.

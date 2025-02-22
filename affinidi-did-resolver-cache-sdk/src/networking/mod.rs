@@ -5,16 +5,20 @@
 //!
 
 use network::WSCommands;
-use rand::{distr::Alphanumeric, Rng};
+use rand::{Rng, distr::Alphanumeric};
 use serde::{Deserialize, Serialize};
 use ssi::dids::Document;
 use tokio::{select, sync::oneshot};
-use tracing::{debug, span, warn, Instrument, Level};
+use tracing::{Instrument, Level, debug, span, warn};
 
-use crate::{errors::DIDCacheError, DIDCacheClient};
+use crate::{DIDCacheClient, errors::DIDCacheError};
+#[cfg(feature = "network")]
+pub(crate) mod handshake;
 pub mod network;
-mod request_queue;
+#[cfg(feature = "network")]
+pub(crate) mod utils;
 
+mod request_queue;
 /// WSRequest is the request format to the websocket connection
 /// did: DID to resolve
 #[derive(Debug, Deserialize, Serialize)]
