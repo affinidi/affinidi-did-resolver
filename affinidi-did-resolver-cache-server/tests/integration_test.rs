@@ -1,4 +1,4 @@
-use affinidi_did_resolver_cache_sdk::{config::ClientConfigBuilder, DIDCacheClient};
+use affinidi_did_resolver_cache_sdk::{config::DIDCacheConfigBuilder, DIDCacheClient};
 use affinidi_did_resolver_cache_server::server::start;
 use blake2::{Blake2s256, Digest};
 use did_peer::{
@@ -25,7 +25,7 @@ async fn test_cache_server() {
     let did_peer = _create_and_validate_did_peer();
 
     // Build config with network
-    let config = ClientConfigBuilder::default()
+    let config = DIDCacheConfigBuilder::default()
         .with_network_mode("ws://127.0.0.1:8080/did/v1/ws")
         .with_cache_ttl(10)
         .build();

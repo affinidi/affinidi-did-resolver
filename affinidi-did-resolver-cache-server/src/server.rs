@@ -5,7 +5,7 @@ use crate::{
     SharedData,
 };
 use affinidi_did_resolver_cache_sdk::{
-    config::ClientConfigBuilder, errors::DIDCacheError, DIDCacheClient,
+    config::DIDCacheConfigBuilder, errors::DIDCacheError, DIDCacheClient,
 };
 use axum::{routing::get, Router};
 use http::Method;
@@ -70,7 +70,7 @@ pub async fn start() -> Result<(), DIDCacheError> {
     let config = init(Some(reload_handle)).expect("Couldn't initialize DID Cache!");
 
     // Use the affinidi-did-resolver-cache-sdk in local mode
-    let cache_config = ClientConfigBuilder::default()
+    let cache_config = DIDCacheConfigBuilder::default()
         .with_cache_capacity(config.cache_capacity_count)
         .with_cache_ttl(config.cache_expire)
         .build();

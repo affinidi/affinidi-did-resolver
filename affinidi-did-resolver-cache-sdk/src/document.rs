@@ -2,8 +2,8 @@
 
 use ssi::{
     dids::{
+        DIDURL, Document,
         document::{DIDVerificationMethod, ResourceRef},
-        Document, DIDURL,
     },
     verification_methods::ProofPurposes,
 };
@@ -109,14 +109,14 @@ impl DocumentExt for Document {
 
 #[cfg(test)]
 mod tests {
-    use crate::{config, DIDCacheClient};
+    use crate::{DIDCacheClient, config};
 
     use super::*;
 
     const TEST_DID: &str = "did:peer:2.Vz6MkiToqovww7vYtxm1xNM15u9JzqzUFZ1k7s7MazYJUyAxv.EzQ3shQLqRUza6AMJFbPuMdvFRFWm1wKviQRnQSC1fScovJN4s.SeyJ0IjoiRElEQ29tbU1lc3NhZ2luZyIsInMiOnsidXJpIjoiaHR0cHM6Ly8xMjcuMC4wLjE6NzAzNyIsImEiOlsiZGlkY29tbS92MiJdLCJyIjpbXX19";
 
     async fn basic_local_client() -> DIDCacheClient {
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         DIDCacheClient::new(config).await.unwrap()
     }
 
@@ -126,9 +126,11 @@ mod tests {
 
         // Resolve a DID which automatically adds it to the cache
         let response = client.resolve(TEST_DID).await.unwrap();
-        assert!(response
-            .doc
-            .contains_key_agreement(&[TEST_DID, "#key-2"].concat()));
+        assert!(
+            response
+                .doc
+                .contains_key_agreement(&[TEST_DID, "#key-2"].concat())
+        );
     }
 
     #[tokio::test]
@@ -137,9 +139,11 @@ mod tests {
 
         // Resolve a DID which automatically adds it to the cache
         let response = client.resolve(TEST_DID).await.unwrap();
-        assert!(!response
-            .doc
-            .contains_key_agreement(&[TEST_DID, "#key-3"].concat()));
+        assert!(
+            !response
+                .doc
+                .contains_key_agreement(&[TEST_DID, "#key-3"].concat())
+        );
     }
 
     #[tokio::test]

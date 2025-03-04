@@ -2,7 +2,7 @@
 //! Benchmark references: (Apple M1 Max)
 //! - 1 million did:key's generated in ~4.2 seconds, consumes 2.3MiB of memory
 use affinidi_did_resolver_cache_sdk::{
-    config::ClientConfigBuilder, errors::DIDCacheError, DIDCacheClient,
+    config::DIDCacheConfigBuilder, errors::DIDCacheError, DIDCacheClient,
 };
 use clap::Parser;
 use futures_util::future::join_all;
@@ -50,7 +50,7 @@ async fn main() -> Result<(), DIDCacheError> {
     tracing::subscriber::set_global_default(subscriber).expect("Logging failed, exiting...");
 
     #[allow(unused_mut)]
-    let mut cache_config = ClientConfigBuilder::default();
+    let mut cache_config = DIDCacheConfigBuilder::default();
     if let Some(_address) = &args.network_address {
         #[cfg(feature = "network")]
         {

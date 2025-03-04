@@ -1,6 +1,6 @@
-use crate::{errors::DIDCacheError, DIDCacheClient};
+use crate::{DIDCacheClient, errors::DIDCacheError};
 use did_peer::DIDPeer;
-use ssi::dids::{DIDEthr, DIDKey, DIDResolver, DIDWeb, Document, DID, DIDJWK, DIDPKH};
+use ssi::dids::{DID, DIDEthr, DIDJWK, DIDKey, DIDPKH, DIDResolver, DIDWeb, Document};
 use tracing::error;
 
 impl DIDCacheClient {
@@ -113,17 +113,17 @@ impl DIDCacheClient {
 
 #[cfg(test)]
 mod tests {
-    use crate::{config, DIDCacheClient};
+    use crate::{DIDCacheClient, config};
 
     const DID_ETHR: &str = "did:ethr:0x1:0xb9c5714089478a327f09197987f16f9e5d936e8a";
-    const DID_JWK: &str= "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFakoydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00NkdxRHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9";
+    const DID_JWK: &str = "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFakoydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00NkdxRHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9";
     const DID_KEY: &str = "did:key:z6MkiToqovww7vYtxm1xNM15u9JzqzUFZ1k7s7MazYJUyAxv";
     const DID_PEER: &str = "did:peer:2.Vz6MkiToqovww7vYtxm1xNM15u9JzqzUFZ1k7s7MazYJUyAxv.EzQ3shQLqRUza6AMJFbPuMdvFRFWm1wKviQRnQSC1fScovJN4s.SeyJ0IjoiRElEQ29tbU1lc3NhZ2luZyIsInMiOnsidXJpIjoiaHR0cHM6Ly8xMjcuMC4wLjE6NzAzNyIsImEiOlsiZGlkY29tbS92MiJdLCJyIjpbXX19";
-    const DID_PKH: &str =  "did:pkh:solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ:CKg5d12Jhpej1JqtmxLJgaFqqeYjxgPqToJ4LBdvG9Ev";
+    const DID_PKH: &str = "did:pkh:solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ:CKg5d12Jhpej1JqtmxLJgaFqqeYjxgPqToJ4LBdvG9Ev";
 
     #[tokio::test]
     async fn local_resolve_ethr() {
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         let client = DIDCacheClient::new(config).await.unwrap();
 
         let parts: Vec<&str> = DID_ETHR.split(':').collect();
@@ -140,7 +140,7 @@ mod tests {
 
     #[tokio::test]
     async fn local_resolve_jwk() {
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         let client = DIDCacheClient::new(config).await.unwrap();
 
         let parts: Vec<&str> = DID_JWK.split(':').collect();
@@ -164,7 +164,7 @@ mod tests {
 
     #[tokio::test]
     async fn local_resolve_key() {
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         let client = DIDCacheClient::new(config).await.unwrap();
 
         let parts: Vec<&str> = DID_KEY.split(':').collect();
@@ -184,7 +184,7 @@ mod tests {
     }
     #[tokio::test]
     async fn local_resolve_peer() {
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         let client = DIDCacheClient::new(config).await.unwrap();
 
         let parts: Vec<&str> = DID_PEER.split(':').collect();
@@ -225,7 +225,7 @@ mod tests {
 
     #[tokio::test]
     async fn local_resolve_pkh() {
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         let client = DIDCacheClient::new(config).await.unwrap();
         let parts: Vec<&str> = DID_PKH.split(':').collect();
 

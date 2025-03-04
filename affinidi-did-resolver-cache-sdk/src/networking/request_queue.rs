@@ -2,7 +2,7 @@
 //! [RequestList] helps manage the buffer and returns the right response
 
 use super::network::Responder;
-use crate::config::ClientConfig;
+use crate::config::DIDCacheConfig;
 use std::collections::HashMap;
 use tracing::debug;
 
@@ -24,7 +24,7 @@ pub(crate) struct RequestList {
 
 impl RequestList {
     /// Create a new request list
-    pub fn new(config: &ClientConfig) -> Self {
+    pub fn new(config: &DIDCacheConfig) -> Self {
         debug!(
             "created request list limit_count({})",
             config.network_cache_limit_count
@@ -142,7 +142,7 @@ mod tests {
     use std::collections::HashMap;
 
     use blake2::{Blake2s256, Digest};
-    use rand::{distr::Alphanumeric, Rng};
+    use rand::{Rng, distr::Alphanumeric};
     use tokio::sync::oneshot::{self, Sender};
 
     use crate::{
@@ -154,7 +154,7 @@ mod tests {
 
     #[tokio::test]
     async fn new_works() {
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         let request_list = RequestList::new(&config);
 
         assert!(!request_list.list_full);
@@ -163,7 +163,7 @@ mod tests {
 
     #[tokio::test]
     async fn insert_works_returns_true() {
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         let mut request_list = RequestList::new(&config);
 
         let (tx, _) = oneshot::channel::<WSCommands>();
@@ -178,7 +178,7 @@ mod tests {
 
     #[tokio::test]
     async fn insert_works_returns_false_duplicates() {
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         let mut request_list = RequestList::new(&config);
 
         let (tx, _) = oneshot::channel::<WSCommands>();
@@ -196,7 +196,7 @@ mod tests {
 
     #[tokio::test]
     async fn insert_list_becomes_full() {
-        let config = config::ClientConfigBuilder::default()
+        let config = config::DIDCacheConfigBuilder::default()
             .with_network_cache_limit_count(1)
             .build();
         let mut request_list = RequestList::new(&config);
@@ -222,7 +222,7 @@ mod tests {
 
     #[tokio::test]
     async fn remove_key_not_found() {
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         let mut request_list = RequestList::new(&config);
 
         let result = request_list.remove(&_hash_did(DID_KEY), None);
@@ -231,7 +231,7 @@ mod tests {
 
     #[tokio::test]
     async fn remove_key_not_found_passing_uuid() {
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         let mut request_list = RequestList::new(&config);
 
         let result = request_list.remove(&_hash_did(DID_KEY), Some("".to_string()));
@@ -240,7 +240,7 @@ mod tests {
 
     #[tokio::test]
     async fn remove_key_not_found_passing_uuid_wrong_did() {
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         let mut request_list = RequestList::new(&config);
 
         let result = request_list.remove(&_hash_did("wrongdid"), Some("".to_string()));
@@ -314,7 +314,7 @@ mod tests {
 
         let mut did_to_uuid_map: HashMap<String, Vec<String>> = HashMap::new();
 
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         let mut request_list = RequestList::new(&config);
 
         for did in dids {
