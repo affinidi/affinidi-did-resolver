@@ -2,6 +2,10 @@
 
 ## Changelog history
 
+### ?? March 2025 (release 0.4.1)
+
+* Added Minimum Supported Rust Version 1.85
+
 ### 4th March 2025 (release 0.4.0)
 
 * MAINTENANCE: Crates updated
