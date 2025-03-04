@@ -2,6 +2,10 @@
 
 ## Changelog history
 
+### 4th March 2025 (release 0.4.1)
+
+* Fixing release issues to crates.io
+
 ### 4th March 2025 (release 0.4.0)
 
 * MAINTENANCE: Crates updated
