@@ -5,9 +5,9 @@
 ### 4th March 2025 (release 0.4.0)
 
 * MAINTENANCE: Crates updated
-* Breaking Change: ClientConfig and CLientConfigBuilder renamed
+* Breaking Change: ClientConfig and ClientConfigBuilder renamed
   * ClientConfig --> DIDCacheConfig
-  * CLientConfigBuilder --> DIDCacheConfigBuilder
+  * ClientConfigBuilder --> DIDCacheConfigBuilder
   
 ### 22nd February 2025 (release 0.3.0)
 
