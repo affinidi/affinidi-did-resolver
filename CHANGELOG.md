@@ -5,6 +5,7 @@
 ### 4th March 2025 (release 0.4.0)
 
 * MAINTENANCE: Crates updated
+* Added Minimum Supported Rust Version 1.85
 * Breaking Change: ClientConfig and ClientConfigBuilder renamed
   * ClientConfig --> DIDCacheConfig
   * ClientConfigBuilder --> DIDCacheConfigBuilder

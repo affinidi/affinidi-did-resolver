@@ -10,6 +10,7 @@ publish.workspace = true
 license.workspace = true
 repository.workspace = true
 readme = "README.md"
+rust-version.workspace = true
 
 [lib]
 crate-type = ["rlib", "cdylib"]
