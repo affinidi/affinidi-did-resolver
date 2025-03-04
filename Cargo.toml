@@ -9,7 +9,7 @@ members = [
 resolver = "3"
 
 [workspace.package]
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 authors = ["Glenn Gore <glenn@affinidi.com>"]
 description = "Affinidi DID Resolver"
@@ -36,9 +36,9 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Cache Server
-affinidi-did-resolver-cache-sdk = { version = "0.3", path = "./affinidi-did-resolver-cache-sdk" }
-did-peer = { version = "0.3", path = "./affinidi-did-resolver-methods/did-peer" }
-did-example = { version = "0.3", path = "./affinidi-did-resolver-methods/did-example" }
+affinidi-did-resolver-cache-sdk = { path = "./affinidi-did-resolver-cache-sdk" }
+did-peer = { path = "./affinidi-did-resolver-methods/did-peer" }
+did-example = { path = "./affinidi-did-resolver-methods/did-example" }
 axum = { version = "0.8", features = ["ws"] }
 axum-extra = { version = "0.10", features = ["typed-header"] }
 axum-server = { version = "0.7", features = ["tls-rustls"] }

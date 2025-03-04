@@ -7,7 +7,7 @@
 //!
 
 use super::{WSResponseType, request_queue::RequestList};
-use crate::{config::ClientConfig, errors::DIDCacheError, networking::utils::connect, WSRequest};
+use crate::{config::DIDCacheConfig, errors::DIDCacheError, networking::utils::connect, WSRequest};
 use blake2::{Blake2s256, Digest};
 use ssi::dids::Document;
 use std::{pin::Pin, time::Duration};
@@ -58,7 +58,7 @@ impl<T> ReadWrite for T where T: AsyncRead + AsyncWrite + Send {}
 /// task_rx_channel: Rc<Receiver<WSCommands>> - PRIVATE. Channel to receive commands from the SDK
 /// task_tx_channel: Sender<WSCommands> - PRIVATE. Channel to send commands to the SDK
 pub(crate) struct NetworkTask {
-    config: ClientConfig,
+    config: DIDCacheConfig,
     service_address: String,
     cache: RequestList,
     sdk_tx: Sender<WSCommands>,
@@ -66,7 +66,7 @@ pub(crate) struct NetworkTask {
 
 impl NetworkTask {
     pub async fn run(
-        config: ClientConfig,
+        config: DIDCacheConfig,
         sdk_rx: &mut Receiver<WSCommands>,
         sdk_tx: &Sender<WSCommands>,
     ) -> Result<(), DIDCacheError> {

@@ -2,6 +2,13 @@
 
 ## Changelog history
 
+### 4th March 2025 (release 0.4.0)
+
+* MAINTENANCE: Crates updated
+* Breaking Change: ClientConfig and ClientConfigBuilder renamed
+  * ClientConfig --> DIDCacheConfig
+  * ClientConfigBuilder --> DIDCacheConfigBuilder
+  
 ### 22nd February 2025 (release 0.3.0)
 
 * MAINTENANCE: Rust 2024 Edition enabled by default (2021 --> 2024)

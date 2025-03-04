@@ -1,5 +1,5 @@
 use affinidi_did_resolver_cache_sdk::{
-    config::ClientConfigBuilder, errors::DIDCacheError, DIDCacheClient,
+    config::DIDCacheConfigBuilder, errors::DIDCacheError, DIDCacheClient,
 };
 use clap::Parser;
 use tracing_subscriber::filter;
@@ -34,7 +34,7 @@ async fn main() -> Result<(), DIDCacheError> {
     println!();
 
     // Create a new local client configuration, use default values
-    let local_config = ClientConfigBuilder::default().build();
+    let local_config = DIDCacheConfigBuilder::default().build();
     let local_resolver = DIDCacheClient::new(local_config).await?;
 
     let response = local_resolver.resolve(&args.did).await?;

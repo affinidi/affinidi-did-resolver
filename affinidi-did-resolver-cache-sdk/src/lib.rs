@@ -16,7 +16,7 @@ As this crate can be used either natively or in a WASM environment, the followin
 compile_error!("Cannot enable both features at the same time");
 
 use blake2::{Blake2s256, Digest};
-use config::ClientConfig;
+use config::DIDCacheConfig;
 use errors::DIDCacheError;
 use moka::future::Cache;
 #[cfg(feature = "network")]
@@ -116,7 +116,7 @@ pub struct ResolveResponse {
 #[wasm_bindgen(getter_with_clone)]
 #[derive(Clone)]
 pub struct DIDCacheClient {
-    config: ClientConfig,
+    config: DIDCacheConfig,
     cache: Cache<String, Document>,
     #[cfg(feature = "network")]
     network_task_tx: Option<mpsc::Sender<WSCommands>>,
@@ -260,7 +260,7 @@ impl DIDCacheClient {
     /// Establishes websocket connection and sets up the cache.
     // using Self instead of DIDCacheClient leads to E0401 errors in dependent crates
     // this is due to wasm_bindgen generated code (check via `cargo expand`)
-    pub async fn new(config: ClientConfig) -> Result<DIDCacheClient, DIDCacheError> {
+    pub async fn new(config: DIDCacheConfig) -> Result<DIDCacheClient, DIDCacheError> {
         // Create the initial cache
         let cache = Cache::builder()
             .max_capacity(config.cache_capacity.into())
@@ -341,7 +341,7 @@ mod tests {
     const DID_KEY: &str = "did:key:z6MkiToqovww7vYtxm1xNM15u9JzqzUFZ1k7s7MazYJUyAxv";
 
     async fn basic_local_client() -> DIDCacheClient {
-        let config = config::ClientConfigBuilder::default().build();
+        let config = config::DIDCacheConfigBuilder::default().build();
         DIDCacheClient::new(config).await.unwrap()
     }
 
