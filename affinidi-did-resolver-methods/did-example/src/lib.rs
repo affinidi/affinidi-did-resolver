@@ -6,7 +6,7 @@
  * Enable using the did_example feature flag
  */
 
-use gxhash::{HashMap, HashMapExt};
+use ahash::AHashMap as HashMap;
 use ssi::dids::document::Document;
 use thiserror::Error;
 

@@ -33,7 +33,7 @@ pub struct WSRequest {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct WSResponse {
     pub did: String,
-    pub hash: u128,
+    pub hash: [u64; 2],
     pub document: Document,
 }
 
@@ -44,7 +44,7 @@ pub struct WSResponse {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct WSResponseError {
     pub did: String,
-    pub hash: u128,
+    pub hash: [u64; 2],
     pub error: String,
 }
 
@@ -65,11 +65,11 @@ impl DIDCacheClient {
     pub(crate) async fn network_resolve(
         &self,
         did: &str,
-        did_hash: u128,
+        did_hash: [u64; 2],
     ) -> Result<Document, DIDCacheError> {
         let _span = span!(Level::DEBUG, "network_resolve");
         async move {
-            debug!("resolving did ({}) via network hash ({})", did, did_hash);
+            debug!("resolving did ({}) via network hash ({:#?})", did, did_hash);
 
             let network_task_tx = self.network_task_tx
             .clone()
@@ -104,7 +104,7 @@ impl DIDCacheClient {
 
                 select! {
                     _ = &mut sleep => {
-                        warn!("Timeout reached, no message received did_hash ({})", did_hash);
+                        warn!("Timeout reached, no message received did_hash ({:#?})", did_hash);
                         network_task_tx.send(WSCommands::TimeOut(unique_id, did_hash)).await.map_err(|err| {
                             DIDCacheError::TransportError(format!("Could not send timeout message to ws_handler: {:?}", err))
                         })?;
@@ -113,7 +113,7 @@ impl DIDCacheClient {
                     value = rx => {
                         match value {
                             Ok(WSCommands::ResponseReceived(doc)) => {
-                                debug!("Received response from network task ({})", did_hash);
+                                debug!("Received response from network task ({:#?})", did_hash);
                                  Ok(*doc)
                             }
                             Ok(WSCommands::ErrorReceived(msg)) => {

@@ -5,8 +5,8 @@
 ### 19th March 2025 (release 0.5.0)
 
 * MAINTENANCE: Crates updated
-* CHANGE: Hashing functions streamlined and changed from blake3 to gxhash
-  * Includes HashMap usage
+* CHANGE: Hashing functions streamlined and changed from blake3 to highway
+  * Includes HashMap usage (using aHash)
 * BREAKING Changes:
   * Config option with_max_did_size_in_kb --> with_max_did_size_in_bytes
   * Hash key used changed from String to u128

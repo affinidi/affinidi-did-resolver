@@ -14,12 +14,13 @@ rust-version.workspace = true
 
 [dependencies]
 affinidi-did-resolver-cache-sdk = { workspace = true, features = ["network"] }
+ahash.workspace = true
 axum.workspace = true
 axum-server.workspace = true
 chrono.workspace = true
 did-peer.workspace = true
+highway.workspace = true
 http.workspace = true
-gxhash.workspace = true
 moka.workspace = true
 rand.workspace = true
 regex.workspace = true

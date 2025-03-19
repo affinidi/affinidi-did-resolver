@@ -43,7 +43,7 @@ pub(crate) enum WSCommands {
     Send(Responder, String, WSRequest),
     ResponseReceived(Box<Document>),
     ErrorReceived(String),
-    TimeOut(String, u128),
+    TimeOut(String, [u64; 2]),
 }
 
 pub(crate) type Responder = oneshot::Sender<WSCommands>;
@@ -318,12 +318,12 @@ impl NetworkTask {
                         )));
                     }
                 } else {
-                    warn!("Response not found in request list: {}", response.hash);
+                    warn!("Response not found in request list: {:#?}", response.hash);
                 }
             }
             Ok(WSResponseType::Error(response)) => {
                 warn!(
-                    "Received error: did hash({}) Error: {:?}",
+                    "Received error: did hash({:#?}) Error: {:?}",
                     response.hash, response.error
                 );
                 if let Some(channels) = self.cache.remove(&response.hash, None) {
@@ -331,7 +331,7 @@ impl NetworkTask {
                         let _ = channel.send(WSCommands::ErrorReceived(response.error.clone()));
                     }
                 } else {
-                    warn!("Response not found in request list: {}", response.hash);
+                    warn!("Response not found in request list: {:#?}", response.hash);
                 }
             }
             Err(e) => {

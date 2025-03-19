@@ -75,12 +75,13 @@ dependencies = [
 name = "affinidi-did-resolver-cache-sdk"
 version = "0.5.0"
 dependencies = [
+ "ahash 0.8.11",
  "base64 0.22.1",
  "clap",
  "did-example",
  "did-peer",
  "futures-util",
- "gxhash",
+ "highway",
  "moka",
  "num-format",
  "number_prefix",
@@ -109,11 +110,12 @@ name = "affinidi-did-resolver-cache-server"
 version = "0.5.0"
 dependencies = [
  "affinidi-did-resolver-cache-sdk",
+ "ahash 0.8.11",
  "axum",
  "axum-server",
  "chrono",
  "did-peer",
- "gxhash",
+ "highway",
  "http 1.3.1",
  "moka",
  "rand 0.9.0",
@@ -151,6 +153,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e89da841a80418a9b391ebaea17f5c112ffaaa96f621d2c285b5174da76b9011"
 dependencies = [
  "cfg-if",
+ "getrandom 0.2.15",
  "once_cell",
  "version_check",
  "zerocopy 0.7.35",
@@ -1372,7 +1375,7 @@ dependencies = [
 name = "did-example"
 version = "0.5.0"
 dependencies = [
- "gxhash",
+ "ahash 0.8.11",
  "ssi",
  "thiserror 2.0.12",
 ]
@@ -1993,15 +1996,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gxhash"
-version = "3.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3ce1bab7aa741d4e7042b2aae415b78741f267a98a7271ea226cd5ba6c43d7d"
-dependencies = [
- "rustversion",
-]
-
-[[package]]
 name = "h2"
 version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2112,6 +2106,12 @@ name = "hex_fmt"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b07f60793ff0a4d9cef0f18e63b5357e06209987153a64648c972c1e5aff336f"
+
+[[package]]
+name = "highway"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9040319a6910b901d5d49cbada4a99db52836a1b63228a05f7e2b7f8feef89b1"
 
 [[package]]
 name = "hkdf"

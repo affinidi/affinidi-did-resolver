@@ -17,6 +17,7 @@ compile_error!("Cannot enable both features at the same time");
 
 use config::DIDCacheConfig;
 use errors::DIDCacheError;
+use highway::{HighwayHash, HighwayHasher};
 use moka::future::Cache;
 #[cfg(feature = "network")]
 use networking::{
@@ -98,7 +99,7 @@ impl TryFrom<&str> for DIDMethod {
 pub struct ResolveResponse {
     pub did: String,
     pub method: DIDMethod,
-    pub did_hash: u128,
+    pub did_hash: [u64; 2],
     pub doc: Document,
     pub cache_hit: bool,
 }
@@ -114,7 +115,7 @@ pub struct ResolveResponse {
 #[derive(Clone)]
 pub struct DIDCacheClient {
     config: DIDCacheConfig,
-    cache: Cache<u128, Document>,
+    cache: Cache<[u64; 2], Document>,
     #[cfg(feature = "network")]
     network_task_tx: Option<mpsc::Sender<WSCommands>>,
     #[cfg(feature = "network")]
@@ -183,7 +184,7 @@ impl DIDCacheClient {
                 cache_hit: true,
             })
         } else {
-            debug!("did ({}) NOT in cache hash ({:x})", did, hash);
+            debug!("did ({}) NOT in cache hash ({:#?})", did, hash);
             // If the DID is not in the cache, resolve it (local or via network)
             #[cfg(feature = "network")]
             let doc = {
@@ -197,7 +198,7 @@ impl DIDCacheClient {
             #[cfg(not(feature = "network"))]
             let doc = self.local_resolve(did, &parts).await?;
 
-            debug!("adding did ({}) to cache ({:x})", did, hash);
+            debug!("adding did ({}) to cache ({:#?})", did, hash);
             self.cache.insert(hash, doc.clone()).await;
             Ok(ResolveResponse {
                 did: did.to_string(),
@@ -212,7 +213,7 @@ impl DIDCacheClient {
     /// If you want to interact directly with the DID Document cache
     /// This will return a clone of the cache (the clone is cheap, and the cache is shared)
     /// For example, accessing cache statistics or manually inserting a DID Document
-    pub fn get_cache(&self) -> Cache<u128, Document> {
+    pub fn get_cache(&self) -> Cache<[u64; 2], Document> {
         self.cache.clone()
     }
 
@@ -233,14 +234,14 @@ impl DIDCacheClient {
     /// Add a DID Document to the cache manually
     pub async fn add_did_document(&mut self, did: &str, doc: Document) {
         let hash = DIDCacheClient::hash_did(did);
-        debug!("manually adding did ({}) hash({:x}) to cache", did, hash);
+        debug!("manually adding did ({}) hash({:#?}) to cache", did, hash);
         self.cache.insert(hash, doc).await;
     }
 
     /// Convenience function to hash a DID
-    pub fn hash_did(did: &str) -> u128 {
+    pub fn hash_did(did: &str) -> [u64; 2] {
         // Use a consistent Seed so it always hashes to the same value
-        gxhash::gxhash128(did.as_bytes(), 1234)
+        HighwayHasher::default().hash128(did.as_bytes())
     }
 }
 
