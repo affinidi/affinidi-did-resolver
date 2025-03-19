@@ -1,11 +1,12 @@
 use super::{handshake, network::ReadWrite};
 use crate::errors::DIDCacheError;
+use gxhash::{HashMap, HashMapExt};
 use rustls::{
     ClientConfig,
     pki_types::{DnsName, ServerName},
 };
 use rustls_platform_verifier::ConfigVerifierExt;
-use std::{collections::HashMap, pin::Pin, sync::Arc};
+use std::{pin::Pin, sync::Arc};
 use tokio::{
     io::{AsyncBufRead, AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::TcpStream,

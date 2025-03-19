@@ -1,5 +1,5 @@
-use crate::{config::Config, SharedData};
-use axum::{extract::State, response::IntoResponse, routing::get, Json, Router};
+use crate::{SharedData, config::Config};
+use axum::{Json, Router, extract::State, response::IntoResponse, routing::get};
 use tracing::info;
 
 pub(crate) mod http;

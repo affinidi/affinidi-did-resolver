@@ -1,18 +1,17 @@
-use affinidi_did_resolver_cache_sdk::{config::DIDCacheConfigBuilder, DIDCacheClient};
+use affinidi_did_resolver_cache_sdk::{DIDCacheClient, config::DIDCacheConfigBuilder};
 use affinidi_did_resolver_cache_server::server::start;
-use blake2::{Blake2s256, Digest};
 use did_peer::{
     DIDPeer, DIDPeerCreateKeys, DIDPeerKeyType, DIDPeerKeys, DIDPeerService, PeerServiceEndPoint,
     PeerServiceEndPointLong,
 };
 use ssi::{
-    dids::{DIDBuf, Document},
     JWK,
+    dids::{DIDBuf, Document},
 };
-use tokio::time::{sleep, Duration};
+use tokio::time::{Duration, sleep};
 
 const DID_ETHR: &str = "did:ethr:0x1:0xb9c5714089478a327f09197987f16f9e5d936e8a";
-const DID_JWK: &str= "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFakoydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00NkdxRHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9";
+const DID_JWK: &str = "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFakoydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00NkdxRHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9";
 const DID_KEY: &str = "did:key:z6MkiToqovww7vYtxm1xNM15u9JzqzUFZ1k7s7MazYJUyAxv";
 const DID_PKH: &str =
     "did:pkh:solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ:CKg5d12Jhpej1JqtmxLJgaFqqeYjxgPqToJ4LBdvG9Ev";
@@ -47,16 +46,24 @@ async fn test_cache_server() {
     // Match doc in cache with resolved doc
     let cache = client.get_cache().clone();
     for (i, did) in dids.clone().iter().enumerate() {
-        let in_cache_doc = cache.get(&_hash_did(did)).await.unwrap();
+        let in_cache_doc = cache.get(&DIDCacheClient::hash_did(did)).await.unwrap();
         assert_eq!(in_cache_doc, did_docs_vec[i]);
     }
     client.remove(DID_PKH).await.unwrap();
-    assert!(!client.get_cache().contains_key(&_hash_did(DID_PKH)));
+    assert!(
+        !client
+            .get_cache()
+            .contains_key(&DIDCacheClient::hash_did(DID_PKH))
+    );
 
     sleep(Duration::from_secs(11)).await;
     // Validate cache expiry
     for did in dids.clone() {
-        assert!(!client.get_cache().contains_key(&_hash_did(did)));
+        assert!(
+            !client
+                .get_cache()
+                .contains_key(&DIDCacheClient::hash_did(did))
+        );
     }
 }
 
@@ -95,12 +102,6 @@ fn _validate_did_peer(did_peer: &str, e_did_key: &str, v_did_key: &str) {
 
     assert_eq!(parts.len(), 3);
     assert_eq!(parts[1], "peer");
-}
-
-fn _hash_did(did: &str) -> String {
-    let mut hasher = Blake2s256::new();
-    hasher.update(did);
-    format!("{:x}", hasher.clone().finalize())
 }
 
 fn _get_keys(

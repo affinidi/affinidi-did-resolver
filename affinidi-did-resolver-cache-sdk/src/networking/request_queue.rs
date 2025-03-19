@@ -3,7 +3,7 @@
 
 use super::network::Responder;
 use crate::config::DIDCacheConfig;
-use std::collections::HashMap;
+use gxhash::{HashMap, HashMapExt};
 use tracing::debug;
 
 /// List of lookups that are in progress.Note the list is not in any order.
@@ -16,7 +16,7 @@ use tracing::debug;
 /// NOTE: Handles duplicate DID resolver requests, by matching them in the list by the DID hash, adds elements using
 ///       the unique ID as an identifier.
 pub(crate) struct RequestList {
-    list: HashMap<String, Vec<(String, Responder)>>,
+    list: HashMap<u128, Vec<(String, Responder)>>,
     list_full: bool,
     limit_count: u32,
     total_count: u32,
@@ -39,7 +39,7 @@ impl RequestList {
 
     /// Insert a new request into the list
     /// Returns: true if the request is new, false if it is a duplicate (no need to send to server)
-    pub fn insert(&mut self, key: String, uid: &str, channel: Responder) -> bool {
+    pub fn insert(&mut self, key: u128, uid: &str, channel: Responder) -> bool {
         // If the key exists, append the value to the list
         if let Some(element) = self.list.get_mut(&key) {
             element.push((uid.to_string(), channel));
@@ -50,8 +50,7 @@ impl RequestList {
             false
         } else {
             // Otherwise, create a new list with the value
-            self.list
-                .insert(key.clone(), vec![(uid.to_string(), channel)]);
+            self.list.insert(key, vec![(uid.to_string(), channel)]);
 
             self.total_count += 1;
 
@@ -71,7 +70,7 @@ impl RequestList {
     /// ^^ This is why we don't need a get() function...
     /// If uid isn't provided, then all channels for given key are removed
     /// If uid is provided, then we just remove that channel for that key (which if empty will delete the key)
-    pub(crate) fn remove(&mut self, key: &str, uid: Option<String>) -> Option<Vec<Responder>> {
+    pub(crate) fn remove(&mut self, key: &u128, uid: Option<String>) -> Option<Vec<Responder>> {
         // Get the Responder Channels from the list
         // Request must be in the list itself!
 
@@ -139,16 +138,13 @@ impl RequestList {
 #[cfg(test)]
 mod tests {
 
-    use std::collections::HashMap;
-
-    use blake2::{Blake2s256, Digest};
-    use rand::{Rng, distr::Alphanumeric};
-    use tokio::sync::oneshot::{self, Sender};
-
     use crate::{
-        config,
+        DIDCacheClient, config,
         networking::{network::WSCommands, request_queue::RequestList},
     };
+    use gxhash::{HashMap, HashMapExt};
+    use rand::{Rng, distr::Alphanumeric};
+    use tokio::sync::oneshot::{self, Sender};
     const DID_KEY: &str = "did:key:z6MkiToqovww7vYtxm1xNM15u9JzqzUFZ1k7s7MazYJUyAxv";
     const DID_KEY_2: &str = "did:key:z6Mkp89diy1PZkbUBDTpiqZBotddb1VV7JnY8qiZMGErUbFe";
 
@@ -169,9 +165,9 @@ mod tests {
         let (tx, _) = oneshot::channel::<WSCommands>();
 
         let unique_id: String = _unique_id();
-        let did_hash = _hash_did(DID_KEY);
+        let did_hash = DIDCacheClient::hash_did(DID_KEY);
 
-        let insert_result = request_list.insert(did_hash.clone(), &unique_id, tx);
+        let insert_result = request_list.insert(did_hash, &unique_id, tx);
 
         assert!(insert_result);
     }
@@ -185,10 +181,10 @@ mod tests {
         let (tx2, _) = oneshot::channel::<WSCommands>();
 
         let unique_id: String = _unique_id();
-        let did_hash = _hash_did(DID_KEY);
+        let did_hash = DIDCacheClient::hash_did(DID_KEY);
 
-        let insert_result = request_list.insert(did_hash.clone(), &unique_id, tx);
-        let insert_result2 = request_list.insert(did_hash.clone(), &unique_id, tx2);
+        let insert_result = request_list.insert(did_hash, &unique_id, tx);
+        let insert_result2 = request_list.insert(did_hash, &unique_id, tx2);
 
         assert!(insert_result);
         assert!(!insert_result2);
@@ -207,11 +203,11 @@ mod tests {
         let unique_id: String = _unique_id();
         let unique_id_2: String = _unique_id();
 
-        let did_hash = _hash_did(DID_KEY);
-        let did_hash_2 = _hash_did(DID_KEY_2);
+        let did_hash = DIDCacheClient::hash_did(DID_KEY);
+        let did_hash_2 = DIDCacheClient::hash_did(DID_KEY_2);
 
-        let insert_result = request_list.insert(did_hash.clone(), &unique_id, tx);
-        let insert_result2 = request_list.insert(did_hash_2.clone(), &unique_id_2, tx2);
+        let insert_result = request_list.insert(did_hash, &unique_id, tx);
+        let insert_result2 = request_list.insert(did_hash_2, &unique_id_2, tx2);
 
         assert!(insert_result);
         assert!(insert_result2);
@@ -225,7 +221,7 @@ mod tests {
         let config = config::DIDCacheConfigBuilder::default().build();
         let mut request_list = RequestList::new(&config);
 
-        let result = request_list.remove(&_hash_did(DID_KEY), None);
+        let result = request_list.remove(&DIDCacheClient::hash_did(DID_KEY), None);
         assert!(result.is_none());
     }
 
@@ -234,7 +230,7 @@ mod tests {
         let config = config::DIDCacheConfigBuilder::default().build();
         let mut request_list = RequestList::new(&config);
 
-        let result = request_list.remove(&_hash_did(DID_KEY), Some("".to_string()));
+        let result = request_list.remove(&DIDCacheClient::hash_did(DID_KEY), Some("".to_string()));
         assert!(result.is_none());
     }
 
@@ -243,7 +239,8 @@ mod tests {
         let config = config::DIDCacheConfigBuilder::default().build();
         let mut request_list = RequestList::new(&config);
 
-        let result = request_list.remove(&_hash_did("wrongdid"), Some("".to_string()));
+        let result =
+            request_list.remove(&DIDCacheClient::hash_did("wrongdid"), Some("".to_string()));
         assert!(result.is_none());
     }
 
@@ -251,18 +248,25 @@ mod tests {
     async fn remove_passing_uuid_works() {
         let (mut request_list, did_to_uuid) = _fill_request_list([DID_KEY].to_vec(), true, Some(1));
 
-        let num_of_channels_before_remove =
-            request_list.list.get(&_hash_did(DID_KEY)).unwrap().len();
+        let num_of_channels_before_remove = request_list
+            .list
+            .get(&DIDCacheClient::hash_did(DID_KEY))
+            .unwrap()
+            .len();
         let total_count_before_remove = request_list.total_count;
         let ids = did_to_uuid.get(DID_KEY).unwrap();
 
         request_list
-            .remove(&_hash_did(DID_KEY), ids.first().cloned())
+            .remove(&DIDCacheClient::hash_did(DID_KEY), ids.first().cloned())
             .unwrap();
 
         assert_eq!(
             num_of_channels_before_remove - 1,
-            request_list.list.get(&_hash_did(DID_KEY)).unwrap().len()
+            request_list
+                .list
+                .get(&DIDCacheClient::hash_did(DID_KEY))
+                .unwrap()
+                .len()
         );
         assert_eq!(total_count_before_remove, request_list.total_count);
     }
@@ -271,7 +275,9 @@ mod tests {
     async fn remove_without_passing_uuid_to_remove_all_works() {
         let (mut request_list, _) = _fill_request_list([DID_KEY].to_vec(), true, Some(4));
 
-        request_list.remove(&_hash_did(DID_KEY), None).unwrap();
+        request_list
+            .remove(&DIDCacheClient::hash_did(DID_KEY), None)
+            .unwrap();
 
         assert_eq!(request_list.total_count, 0);
     }
@@ -280,13 +286,9 @@ mod tests {
     async fn remove_works() {
         let (mut request_list, _) = _fill_request_list([DID_KEY].to_vec(), false, None);
 
-        request_list.remove(&_hash_did(DID_KEY), None).unwrap();
-    }
-
-    fn _hash_did(did: &str) -> String {
-        let mut hasher = Blake2s256::new();
-        hasher.update(did);
-        format!("{:x}", hasher.clone().finalize())
+        request_list
+            .remove(&DIDCacheClient::hash_did(DID_KEY), None)
+            .unwrap();
     }
 
     fn _unique_id() -> String {
@@ -302,10 +304,10 @@ mod tests {
         fill_channels_for_key: bool,
         fill_channels_for_key_number: Option<u8>,
     ) -> (RequestList, HashMap<String, Vec<String>>) {
-        fn get_hash_and_id(did: &str) -> (String, String, Sender<WSCommands>) {
+        fn get_hash_and_id(did: &str) -> (String, u128, Sender<WSCommands>) {
             (
                 _unique_id(),
-                _hash_did(did),
+                DIDCacheClient::hash_did(did),
                 oneshot::channel::<WSCommands>().0,
             )
         }
@@ -320,12 +322,12 @@ mod tests {
         for did in dids {
             let (unique_id, did_hash, tx) = get_hash_and_id(did);
             let mut uuids_arr: Vec<String> = [unique_id.clone()].to_vec();
-            let insert_result = request_list.insert(did_hash.clone(), &unique_id, tx);
+            let insert_result = request_list.insert(did_hash, &unique_id, tx);
             if insert_result && fill_channels_for_key {
                 for _i in 0..nested_channels_num {
                     let (unique_id, did_hash, tx) = get_hash_and_id(did);
                     uuids_arr.push(unique_id.clone());
-                    request_list.insert(did_hash.clone(), &unique_id, tx);
+                    request_list.insert(did_hash, &unique_id, tx);
                 }
             }
             did_to_uuid_map.insert(did.to_string(), uuids_arr);

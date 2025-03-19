@@ -15,24 +15,23 @@ As this crate can be used either natively or in a WASM environment, the followin
 #[cfg(all(feature = "network", target_arch = "wasm32"))]
 compile_error!("Cannot enable both features at the same time");
 
-use blake2::{Blake2s256, Digest};
 use config::DIDCacheConfig;
 use errors::DIDCacheError;
 use moka::future::Cache;
 #[cfg(feature = "network")]
 use networking::{
-    network::{NetworkTask, WSCommands},
     WSRequest,
+    network::{NetworkTask, WSCommands},
 };
 use ssi::dids::Document;
 #[cfg(feature = "network")]
 use std::sync::Arc;
 use std::{fmt, time::Duration};
 #[cfg(feature = "network")]
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::{Mutex, mpsc};
 use tracing::debug;
-use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsValue;
+use wasm_bindgen::prelude::*;
 
 pub mod config;
 pub mod document;
@@ -40,8 +39,6 @@ pub mod errors;
 #[cfg(feature = "network")]
 pub mod networking;
 mod resolver;
-
-const BYTES_PER_KILO_BYTE: f64 = 1000.0;
 
 /// DID Methods supported by the DID Universal Resolver Cache
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -101,7 +98,7 @@ impl TryFrom<&str> for DIDMethod {
 pub struct ResolveResponse {
     pub did: String,
     pub method: DIDMethod,
-    pub did_hash: String,
+    pub did_hash: u128,
     pub doc: Document,
     pub cache_hit: bool,
 }
@@ -117,7 +114,7 @@ pub struct ResolveResponse {
 #[derive(Clone)]
 pub struct DIDCacheClient {
     config: DIDCacheConfig,
-    cache: Cache<String, Document>,
+    cache: Cache<u128, Document>,
     #[cfg(feature = "network")]
     network_task_tx: Option<mpsc::Sender<WSCommands>>,
     #[cfg(feature = "network")]
@@ -133,13 +130,12 @@ impl DIDCacheClient {
     /// NOTE: The DID Document id may be different to the requested DID due to the DID having been updated.
     ///       The original DID should be in the `also_known_as` field of the DID Document.
     pub async fn resolve(&self, did: &str) -> Result<ResolveResponse, DIDCacheError> {
-        let did_size_in_kb = did.len() as f64 / BYTES_PER_KILO_BYTE;
-
         // If DID's size is greater than 1KB we don't resolve it
-        if did_size_in_kb > self.config.max_did_size_in_kb {
+        if did.len() > self.config.max_did_size_in_bytes {
             return Err(DIDCacheError::DIDError(format!(
-                "The DID size of {:.3}KB exceeds the limit of {1}KB. Please ensure the size is less than {1}KB.",
-                did_size_in_kb, self.config.max_did_size_in_kb
+                "The DID size of {}bytes exceeds the limit of {1}. Please ensure the size is less than {1}.",
+                did.len(),
+                self.config.max_did_size_in_bytes
             )));
         }
 
@@ -160,9 +156,7 @@ impl DIDCacheClient {
             )));
         }
 
-        let mut hasher = Blake2s256::new();
-        hasher.update(did);
-        let did_hash = format!("{:x}", hasher.finalize());
+        let hash = DIDCacheClient::hash_did(did);
 
         #[cfg(feature = "did_example")]
         // Short-circuit for example DIDs
@@ -179,22 +173,22 @@ impl DIDCacheClient {
         }
 
         // Check if the DID is in the cache
-        if let Some(doc) = self.cache.get(&did_hash).await {
+        if let Some(doc) = self.cache.get(&hash).await {
             debug!("found did ({}) in cache", did);
             Ok(ResolveResponse {
                 did: did.to_string(),
                 method: parts[1].try_into()?,
-                did_hash,
+                did_hash: hash,
                 doc,
                 cache_hit: true,
             })
         } else {
-            debug!("did ({}) NOT in cache hash ({})", did, did_hash);
+            debug!("did ({}) NOT in cache hash ({:x})", did, hash);
             // If the DID is not in the cache, resolve it (local or via network)
             #[cfg(feature = "network")]
             let doc = {
                 if self.config.service_address.is_some() {
-                    self.network_resolve(did, &did_hash).await?
+                    self.network_resolve(did, hash).await?
                 } else {
                     self.local_resolve(did, &parts).await?
                 }
@@ -203,12 +197,12 @@ impl DIDCacheClient {
             #[cfg(not(feature = "network"))]
             let doc = self.local_resolve(did, &parts).await?;
 
-            debug!("adding did ({}) to cache ({})", did, did_hash);
-            self.cache.insert(did_hash.clone(), doc.clone()).await;
+            debug!("adding did ({}) to cache ({:x})", did, hash);
+            self.cache.insert(hash, doc.clone()).await;
             Ok(ResolveResponse {
                 did: did.to_string(),
                 method: parts[1].try_into()?,
-                did_hash,
+                did_hash: hash,
                 doc,
                 cache_hit: false,
             })
@@ -218,7 +212,7 @@ impl DIDCacheClient {
     /// If you want to interact directly with the DID Document cache
     /// This will return a clone of the cache (the clone is cheap, and the cache is shared)
     /// For example, accessing cache statistics or manually inserting a DID Document
-    pub fn get_cache(&self) -> Cache<String, Document> {
+    pub fn get_cache(&self) -> Cache<u128, Document> {
         self.cache.clone()
     }
 
@@ -233,20 +227,20 @@ impl DIDCacheClient {
     /// Removes the specified DID from the cache
     /// Returns the removed DID Document if it was in the cache, or None if it was not
     pub async fn remove(&self, did: &str) -> Option<Document> {
-        //let did_hash = sha256::digest(did);
-        let mut hasher = Blake2s256::new();
-        hasher.update(did);
-        let did_hash = format!("{:x}", hasher.finalize());
-        self.cache.remove(&did_hash).await
+        self.cache.remove(&DIDCacheClient::hash_did(did)).await
     }
 
     /// Add a DID Document to the cache manually
     pub async fn add_did_document(&mut self, did: &str, doc: Document) {
-        let mut hasher = Blake2s256::new();
-        hasher.update(did);
-        let did_hash = format!("{:x}", hasher.finalize());
-        debug!("manually adding did ({}) hash({}) to cache", did, did_hash);
-        self.cache.insert(did_hash, doc).await;
+        let hash = DIDCacheClient::hash_did(did);
+        debug!("manually adding did ({}) hash({:x}) to cache", did, hash);
+        self.cache.insert(hash, doc).await;
+    }
+
+    /// Convenience function to hash a DID
+    pub fn hash_did(did: &str) -> u128 {
+        // Use a consistent Seed so it always hashes to the same value
+        gxhash::gxhash128(did.as_bytes(), 1234)
     }
 }
 

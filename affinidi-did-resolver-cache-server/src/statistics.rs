@@ -2,16 +2,16 @@
 //! Creates a parallel task that logs cache statistics based on an interval
 use crate::errors::CacheError;
 use affinidi_did_resolver_cache_sdk::DIDMethod;
+use gxhash::HashMap;
 use moka::future::Cache;
 use ssi::dids::Document;
 use std::{
-    collections::HashMap,
     fmt::{self, Display, Formatter},
     sync::Arc,
     time::Duration,
 };
 use tokio::sync::Mutex;
-use tracing::{debug, info, span, Instrument, Level};
+use tracing::{Instrument, Level, debug, info, span};
 
 /// Statistics struct for the cache server
 /// Contains information about the cache, websocket connections, and resolver requests
@@ -128,7 +128,7 @@ impl Statistics {
 pub async fn statistics(
     interval: Duration,
     stats: &Arc<Mutex<Statistics>>,
-    cache: Cache<String, Document>,
+    cache: Cache<u128, Document>,
 ) -> Result<(), CacheError> {
     let _span = span!(Level::INFO, "statistics");
 

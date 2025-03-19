@@ -8,8 +8,8 @@ use std::{
     path::Path,
     time::Duration,
 };
-use tracing::{event, level_filters::LevelFilter, Level};
-use tracing_subscriber::{reload::Handle, Registry};
+use tracing::{Level, event, level_filters::LevelFilter};
+use tracing_subscriber::{Registry, reload::Handle};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct CacheConfig {

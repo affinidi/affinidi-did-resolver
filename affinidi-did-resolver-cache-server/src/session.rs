@@ -1,9 +1,9 @@
-use crate::{common::create_session_id, errors::ErrorResponse, SharedData};
+use crate::{SharedData, common::create_session_id, errors::ErrorResponse};
 use axum::{
-    extract::{FromRef, FromRequestParts},
-    http::{request::Parts, StatusCode},
-    response::{IntoResponse, Response},
     Json,
+    extract::{FromRef, FromRequestParts},
+    http::{StatusCode, request::Parts},
+    response::{IntoResponse, Response},
 };
 use serde::Serialize;
 use serde_json::json;

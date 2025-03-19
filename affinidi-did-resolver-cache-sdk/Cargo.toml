@@ -31,10 +31,10 @@ did_example = ["dep:did-example"]
 
 [dependencies]
 base64 = { workspace = true, optional = true }
-blake2.workspace = true
 did-peer.workspace = true
 did-example = { workspace = true, optional = true }
 futures-util.workspace = true
+gxhash.workspace = true
 moka.workspace = true
 rand.workspace = true
 rustls = { workspace = true, optional = true }

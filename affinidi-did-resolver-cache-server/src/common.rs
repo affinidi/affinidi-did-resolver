@@ -1,5 +1,5 @@
-use rand::{distr::Alphanumeric, Rng};
-use serde::{de::DeserializeOwned, Serialize};
+use rand::{Rng, distr::Alphanumeric};
+use serde::{Serialize, de::DeserializeOwned};
 
 /// Helps with deserializing the generic data field in the SuccessResponse struct
 pub trait GenericDataStruct: DeserializeOwned + Serialize {}

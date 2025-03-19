@@ -22,22 +22,21 @@ use iref::UriBuf;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use ssi::{
+    OneOrMany,
     dids::{
+        DID, DIDBuf, DIDKey, DIDMethod, DIDMethodResolver, DIDURL, DIDURLBuf, DIDURLReferenceBuf,
+        Document, RelativeDIDURLBuf,
         document::{
-            self,
+            self, DIDVerificationMethod, Resource, Service, VerificationRelationships,
             representation::{self, MediaType},
             service::Endpoint,
-            verification_method, DIDVerificationMethod, Resource, Service,
-            VerificationRelationships,
+            verification_method,
         },
         key::VerificationMethodType,
         resolution::{self, Content, Error, Options, Output, Parameters},
-        DIDBuf, DIDKey, DIDMethod, DIDMethodResolver, DIDURLBuf, DIDURLReferenceBuf, Document,
-        RelativeDIDURLBuf, DID, DIDURL,
     },
     jwk::Params,
     prelude::*,
-    OneOrMany,
 };
 use std::{collections::BTreeMap, fmt};
 use thiserror::Error;
@@ -595,7 +594,7 @@ impl DIDPeer {
                                 return Err(DIDPeerError::InternalError(format!(
                                     "Failed to generate ed25519 key. Reason: {}",
                                     e
-                                )))
+                                )));
                             }
                         },
                         DIDPeerKeyType::Secp256k1 => JWK::generate_secp256k1(),
@@ -777,8 +776,8 @@ mod test {
     };
 
     use ssi::{
-        dids::{document::DIDVerificationMethod, DIDBuf, DIDResolver, DID},
         JWK,
+        dids::{DID, DIDBuf, DIDResolver, document::DIDVerificationMethod},
     };
 
     const DID_PEER: &str = "did:peer:2.Vz6MkiToqovww7vYtxm1xNM15u9JzqzUFZ1k7s7MazYJUyAxv.EzQ3shQLqRUza6AMJFbPuMdvFRFWm1wKviQRnQSC1fScovJN4s.SeyJ0IjoiRElEQ29tbU1lc3NhZ2luZyIsInMiOnsidXJpIjoiaHR0cHM6Ly8xMjcuMC4wLjE6NzAzNyIsImEiOlsiZGlkY29tbS92MiJdLCJyIjpbXX19";

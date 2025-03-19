@@ -3,10 +3,10 @@ use did_peer::{
     PeerServiceEndPointLong,
 };
 use ssi::{
-    dids::{DIDResolver, DID},
+    JWK,
+    dids::{DID, DIDResolver},
     jwk::Params,
     multicodec::MultiEncoded,
-    JWK,
 };
 
 #[tokio::main]
