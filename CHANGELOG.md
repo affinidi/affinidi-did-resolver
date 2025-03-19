@@ -2,6 +2,10 @@
 
 ## Changelog history
 
+### 19th March 2025 (release 0.5.1)
+
+* FIX: did_example feature resulted in a build error
+
 ### 19th March 2025 (release 0.5.0)
 
 * MAINTENANCE: Crates updated

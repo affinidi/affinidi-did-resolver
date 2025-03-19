@@ -166,7 +166,7 @@ impl DIDCacheClient {
                 return Ok(ResolveResponse {
                     did: did.to_string(),
                     method: parts[1].try_into()?,
-                    did_hash: did_hash,
+                    did_hash: hash,
                     doc: doc.clone(),
                     cache_hit: true,
                 });

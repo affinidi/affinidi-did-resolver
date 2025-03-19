@@ -73,7 +73,7 @@ dependencies = [
 
 [[package]]
 name = "affinidi-did-resolver-cache-sdk"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "ahash 0.8.11",
  "base64 0.22.1",
@@ -107,7 +107,7 @@ dependencies = [
 
 [[package]]
 name = "affinidi-did-resolver-cache-server"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "affinidi-did-resolver-cache-sdk",
  "ahash 0.8.11",
@@ -133,7 +133,7 @@ dependencies = [
 
 [[package]]
 name = "affinidi-did-resolver-methods"
-version = "0.5.0"
+version = "0.5.1"
 
 [[package]]
 name = "ahash"
@@ -1373,7 +1373,7 @@ dependencies = [
 
 [[package]]
 name = "did-example"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "ahash 0.8.11",
  "ssi",
@@ -1444,7 +1444,7 @@ dependencies = [
 
 [[package]]
 name = "did-peer"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "askar-crypto",
  "base64 0.22.1",
