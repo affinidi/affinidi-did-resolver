@@ -129,7 +129,7 @@ impl DIDCacheConfigBuilder {
 
     /// Set maximum size in bytes of did to be resolved
     /// Default: 1_000 bytes
-    pub fn with_max_did_size_in_kb(mut self, max_did_size_in_bytes: usize) -> Self {
+    pub fn with_max_did_size_in_bytes(mut self, max_did_size_in_bytes: usize) -> Self {
         self.max_did_size_in_bytes = max_did_size_in_bytes;
         self
     }

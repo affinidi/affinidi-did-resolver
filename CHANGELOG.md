@@ -2,11 +2,17 @@
 
 ## Changelog history
 
-### 19th March 2025 (release 0.4.2)
+### 19th March 2025 (release 0.5.0)
 
 * MAINTENANCE: Crates updated
 * CHANGE: Hashing functions streamlined and changed from blake3 to gxhash
   * Includes HashMap usage
+* BREAKING Changes:
+  * Config option with_max_did_size_in_kb --> with_max_did_size_in_bytes
+  * Hash key used changed from String to u128
+
+NOTE:
+Network Performance has increased by approx 82% in this release
 
 ### 4th March 2025 (release 0.4.1)
 

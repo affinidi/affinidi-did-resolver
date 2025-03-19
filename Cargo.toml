@@ -9,7 +9,7 @@ members = [
 resolver = "3"
 
 [workspace.package]
-version = "0.4.2"
+version = "0.5.0"
 edition = "2024"
 authors = ["Glenn Gore <glenn@affinidi.com>"]
 description = "Affinidi DID Resolver"
@@ -22,9 +22,9 @@ repository = "https://github.com/affinidi/affinidi-did-resolver"
 rust-version = "1.85"
 
 [workspace.dependencies]
-affinidi-did-resolver-cache-sdk = { version = "0.4", path = "./affinidi-did-resolver-cache-sdk" }
-did-peer = { version = "0.4", path = "./affinidi-did-resolver-methods/did-peer" }
-did-example = { version = "0.4", path = "./affinidi-did-resolver-methods/did-example" }
+affinidi-did-resolver-cache-sdk = { version = "0.5", path = "./affinidi-did-resolver-cache-sdk" }
+did-peer = { version = "0.5", path = "./affinidi-did-resolver-methods/did-peer" }
+did-example = { version = "0.5", path = "./affinidi-did-resolver-methods/did-example" }
 
 # Common Dependencies
 moka = { version = "0.12", features = ["future"] }
