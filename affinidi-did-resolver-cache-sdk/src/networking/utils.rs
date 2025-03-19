@@ -1,6 +1,6 @@
 use super::{handshake, network::ReadWrite};
 use crate::errors::DIDCacheError;
-use gxhash::{HashMap, HashMapExt};
+use ahash::AHashMap as HashMap;
 use rustls::{
     ClientConfig,
     pki_types::{DnsName, ServerName},

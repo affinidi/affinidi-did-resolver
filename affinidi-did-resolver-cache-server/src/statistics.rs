@@ -2,7 +2,7 @@
 //! Creates a parallel task that logs cache statistics based on an interval
 use crate::errors::CacheError;
 use affinidi_did_resolver_cache_sdk::DIDMethod;
-use gxhash::HashMap;
+use ahash::AHashMap as HashMap;
 use moka::future::Cache;
 use ssi::dids::Document;
 use std::{
@@ -128,7 +128,7 @@ impl Statistics {
 pub async fn statistics(
     interval: Duration,
     stats: &Arc<Mutex<Statistics>>,
-    cache: Cache<u128, Document>,
+    cache: Cache<[u64; 2], Document>,
 ) -> Result<(), CacheError> {
     let _span = span!(Level::INFO, "statistics");
 

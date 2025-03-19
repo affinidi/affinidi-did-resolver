@@ -16,6 +16,6 @@ rust-version.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-gxhash.workspace = true
+ahash.workspace = true
 ssi.workspace = true
 thiserror.workspace = true

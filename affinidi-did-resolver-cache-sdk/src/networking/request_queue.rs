@@ -3,7 +3,7 @@
 
 use super::network::Responder;
 use crate::config::DIDCacheConfig;
-use gxhash::{HashMap, HashMapExt};
+use ahash::AHashMap as HashMap;
 use tracing::debug;
 
 /// List of lookups that are in progress.Note the list is not in any order.
@@ -16,7 +16,7 @@ use tracing::debug;
 /// NOTE: Handles duplicate DID resolver requests, by matching them in the list by the DID hash, adds elements using
 ///       the unique ID as an identifier.
 pub(crate) struct RequestList {
-    list: HashMap<u128, Vec<(String, Responder)>>,
+    list: HashMap<[u64; 2], Vec<(String, Responder)>>,
     list_full: bool,
     limit_count: u32,
     total_count: u32,
@@ -39,12 +39,12 @@ impl RequestList {
 
     /// Insert a new request into the list
     /// Returns: true if the request is new, false if it is a duplicate (no need to send to server)
-    pub fn insert(&mut self, key: u128, uid: &str, channel: Responder) -> bool {
+    pub fn insert(&mut self, key: [u64; 2], uid: &str, channel: Responder) -> bool {
         // If the key exists, append the value to the list
         if let Some(element) = self.list.get_mut(&key) {
             element.push((uid.to_string(), channel));
             debug!(
-                "Duplicate resolver request, adding to queue to await response. id ({})",
+                "Duplicate resolver request, adding to queue to await response. id ({:#?})",
                 key
             );
             false
@@ -59,7 +59,7 @@ impl RequestList {
             }
 
             debug!(
-                "Request inserted: id({}) list_count({})",
+                "Request inserted: id({:#?}) list_count({})",
                 key, self.total_count
             );
             true
@@ -70,7 +70,7 @@ impl RequestList {
     /// ^^ This is why we don't need a get() function...
     /// If uid isn't provided, then all channels for given key are removed
     /// If uid is provided, then we just remove that channel for that key (which if empty will delete the key)
-    pub(crate) fn remove(&mut self, key: &u128, uid: Option<String>) -> Option<Vec<Responder>> {
+    pub(crate) fn remove(&mut self, key: &[u64; 2], uid: Option<String>) -> Option<Vec<Responder>> {
         // Get the Responder Channels from the list
         // Request must be in the list itself!
 
@@ -84,18 +84,18 @@ impl RequestList {
                     let (_, channel) = channels.remove(index);
 
                     debug!(
-                        "Request removed: id({}) channels_waiting({}) list_count({})",
+                        "Request removed: id({:#?}) channels_waiting({}) list_count({})",
                         key,
                         channels.len(),
                         self.total_count
                     );
                     Some(vec![channel])
                 } else {
-                    debug!("Request not found: id({}) unique_id({})", key, uid);
+                    debug!("Request not found: id({:#?}) unique_id({})", key, uid);
                     None
                 }
             } else {
-                debug!("Request not found: id({})", key);
+                debug!("Request not found: id({:#?})", key);
                 None
             };
 
@@ -116,7 +116,7 @@ impl RequestList {
                 self.list_full = false;
 
                 debug!(
-                    "Request removed: hash({}) channels_waiting({}) remaining_list_count({})",
+                    "Request removed: hash({:#?}) channels_waiting({}) remaining_list_count({})",
                     key,
                     channels.len(),
                     self.total_count
@@ -124,7 +124,7 @@ impl RequestList {
 
                 Some(channels.into_iter().map(|(_, channel)| channel).collect())
             } else {
-                debug!("Request not found: hash({})", key);
+                debug!("Request not found: hash({:#?})", key);
                 None
             }
         }
@@ -137,14 +137,14 @@ impl RequestList {
 }
 #[cfg(test)]
 mod tests {
-
     use crate::{
         DIDCacheClient, config,
         networking::{network::WSCommands, request_queue::RequestList},
     };
-    use gxhash::{HashMap, HashMapExt};
+    use ahash::AHashMap as HashMap;
     use rand::{Rng, distr::Alphanumeric};
     use tokio::sync::oneshot::{self, Sender};
+
     const DID_KEY: &str = "did:key:z6MkiToqovww7vYtxm1xNM15u9JzqzUFZ1k7s7MazYJUyAxv";
     const DID_KEY_2: &str = "did:key:z6Mkp89diy1PZkbUBDTpiqZBotddb1VV7JnY8qiZMGErUbFe";
 
@@ -304,7 +304,7 @@ mod tests {
         fill_channels_for_key: bool,
         fill_channels_for_key_number: Option<u8>,
     ) -> (RequestList, HashMap<String, Vec<String>>) {
-        fn get_hash_and_id(did: &str) -> (String, u128, Sender<WSCommands>) {
+        fn get_hash_and_id(did: &str) -> (String, [u64; 2], Sender<WSCommands>) {
             (
                 _unique_id(),
                 DIDCacheClient::hash_did(did),
