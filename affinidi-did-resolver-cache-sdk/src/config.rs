@@ -40,7 +40,7 @@ pub struct DIDCacheConfig {
     #[cfg(feature = "network")]
     pub(crate) network_cache_limit_count: u32,
     pub(crate) max_did_parts: usize,
-    pub(crate) max_did_size_in_kb: f64,
+    pub(crate) max_did_size_in_bytes: usize,
 }
 
 /// DID Cache Config Builder to construct options required for the client.
@@ -61,7 +61,7 @@ pub struct DIDCacheConfigBuilder {
     #[cfg(feature = "network")]
     network_cache_limit_count: u32,
     max_did_parts: usize,
-    max_did_size_in_kb: f64,
+    max_did_size_in_bytes: usize,
 }
 
 impl Default for DIDCacheConfigBuilder {
@@ -76,7 +76,7 @@ impl Default for DIDCacheConfigBuilder {
             #[cfg(feature = "network")]
             network_cache_limit_count: 100,
             max_did_parts: 12,
-            max_did_size_in_kb: 1.0,
+            max_did_size_in_bytes: 1_000,
         }
     }
 }
@@ -127,10 +127,10 @@ impl DIDCacheConfigBuilder {
         self
     }
 
-    /// Set maximum size in KB of did to be resolved as FLOAT
-    /// Default: 5 parts
-    pub fn with_max_did_size_in_kb(mut self, max_did_size_in_kb: f64) -> Self {
-        self.max_did_size_in_kb = max_did_size_in_kb;
+    /// Set maximum size in bytes of did to be resolved
+    /// Default: 1_000 bytes
+    pub fn with_max_did_size_in_kb(mut self, max_did_size_in_bytes: usize) -> Self {
+        self.max_did_size_in_bytes = max_did_size_in_bytes;
         self
     }
 
@@ -146,7 +146,7 @@ impl DIDCacheConfigBuilder {
             #[cfg(feature = "network")]
             network_cache_limit_count: self.network_cache_limit_count,
             max_did_parts: self.max_did_parts,
-            max_did_size_in_kb: self.max_did_size_in_kb,
+            max_did_size_in_bytes: self.max_did_size_in_bytes,
         }
     }
 }

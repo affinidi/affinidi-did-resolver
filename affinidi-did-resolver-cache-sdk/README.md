@@ -18,7 +18,7 @@ You can use this SDK in either local (resolving occurs locally) or in network (r
 
 ## Prerequisites
 
-Rust version 1.79
+Rust version 1.85
 
 NOTE: For network mode, you will need access to a running a DID Universal Resolver Cache!
 

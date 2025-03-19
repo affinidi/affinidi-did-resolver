@@ -1,13 +1,13 @@
 use crate::{
+    SharedData,
     config::init,
     handlers::{application_routes, health_checker_handler},
-    statistics::{statistics, Statistics},
-    SharedData,
+    statistics::{Statistics, statistics},
 };
 use affinidi_did_resolver_cache_sdk::{
-    config::DIDCacheConfigBuilder, errors::DIDCacheError, DIDCacheClient,
+    DIDCacheClient, config::DIDCacheConfigBuilder, errors::DIDCacheError,
 };
-use axum::{routing::get, Router};
+use axum::{Router, routing::get};
 use http::Method;
 use std::{env, net::SocketAddr, sync::Arc};
 use tokio::sync::Mutex;
@@ -15,7 +15,7 @@ use tower_http::{
     cors::CorsLayer,
     trace::{self, TraceLayer},
 };
-use tracing::{event, Level};
+use tracing::{Level, event};
 use tracing_subscriber::{filter, layer::SubscriberExt, reload, util::SubscriberInitExt};
 
 pub async fn start() -> Result<(), DIDCacheError> {

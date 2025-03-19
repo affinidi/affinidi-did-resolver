@@ -1,12 +1,12 @@
 use axum::{
+    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use thiserror::Error;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use crate::common::GenericDataStruct;
 

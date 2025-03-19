@@ -1,5 +1,5 @@
 use affinidi_did_resolver_cache_sdk::{
-    config::DIDCacheConfigBuilder, errors::DIDCacheError, DIDCacheClient,
+    DIDCacheClient, config::DIDCacheConfigBuilder, errors::DIDCacheError,
 };
 use clap::Parser;
 use tracing_subscriber::filter;

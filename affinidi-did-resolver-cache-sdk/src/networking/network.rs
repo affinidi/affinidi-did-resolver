@@ -7,8 +7,10 @@
 //!
 
 use super::{WSResponseType, request_queue::RequestList};
-use crate::{config::DIDCacheConfig, errors::DIDCacheError, networking::utils::connect, WSRequest};
-use blake2::{Blake2s256, Digest};
+use crate::{
+    DIDCacheClient, WSRequest, config::DIDCacheConfig, errors::DIDCacheError,
+    networking::utils::connect,
+};
 use ssi::dids::Document;
 use std::{pin::Pin, time::Duration};
 use tokio::{
@@ -22,9 +24,9 @@ use tokio::{
 };
 use tracing::{Instrument, Level, debug, error, info, span, warn};
 #[cfg(feature = "network")]
-use web_socket::{CloseCode, DataType, Event, MessageType, WebSocket};
-#[cfg(feature = "network")]
 use url::Url;
+#[cfg(feature = "network")]
+use web_socket::{CloseCode, DataType, Event, MessageType, WebSocket};
 
 /// WSCommands are the commands that can be sent between the SDK and the network task
 /// Connected: Signals that the websocket is connected
@@ -41,7 +43,7 @@ pub(crate) enum WSCommands {
     Send(Responder, String, WSRequest),
     ResponseReceived(Box<Document>),
     ErrorReceived(String),
-    TimeOut(String, String),
+    TimeOut(String, u128),
 }
 
 pub(crate) type Responder = oneshot::Sender<WSCommands>;
@@ -93,7 +95,6 @@ impl NetworkTask {
 
             let mut web_socket = network_task.ws_connect().await?;
             let mut watchdog = interval_at(tokio::time::Instant::now()+Duration::from_secs(20), Duration::from_secs(20));
-            
             let mut missed_pings = 0;
 
             loop {
@@ -158,10 +159,8 @@ impl NetworkTask {
                         if let Some(cmd) = value {
                             match cmd {
                                 WSCommands::Send(channel, uid, request) => {
-                                    let mut hasher = Blake2s256::new();
-                                    hasher.update(request.did.clone());
-                                    let did_hash = format!("{:x}", hasher.finalize());
-                                    if network_task.cache.insert(did_hash, &uid, channel) {
+                                    let hash = DIDCacheClient::hash_did(&request.did);
+                                    if network_task.cache.insert(hash, &uid, channel) {
                                         let _ = network_task.ws_send(&mut web_socket, &request).await;
                                     }
                                 }
@@ -197,7 +196,6 @@ impl NetworkTask {
     async fn ws_connect(
         &mut self,
     ) -> Result<WebSocket<BufReader<Pin<Box<dyn ReadWrite>>>>, DIDCacheError> {
-
         //accept_key_from(sec_ws_key);
         async fn _handle_backoff(backoff: Duration) -> Duration {
             let b = if backoff.as_secs() < 60 {
@@ -217,7 +215,7 @@ impl NetworkTask {
             let mut backoff = Duration::from_secs(1);
             loop {
                 debug!("Starting websocket connection");
-                
+
                 let timeout = tokio::time::sleep(self.config.network_timeout);
                 let connection = self._create_socket();
 
@@ -250,8 +248,7 @@ impl NetworkTask {
     // Responsible for creating a websocket connection to the mediator
     async fn _create_socket(
         &mut self,
-    ) -> Result<WebSocket<BufReader<Pin<Box<dyn ReadWrite>>>>, DIDCacheError>  {
-
+    ) -> Result<WebSocket<BufReader<Pin<Box<dyn ReadWrite>>>>, DIDCacheError> {
         debug!("Creating websocket connection");
         // Create a custom websocket request, turn this into a client_request
         // Allows adding custom headers later
@@ -259,20 +256,27 @@ impl NetworkTask {
         let url = match Url::parse(&self.service_address) {
             Ok(url) => url,
             Err(err) => {
-                error!("Invalid ServiceEndpoint address {}: {}", self.service_address, err);
-                return Err(DIDCacheError::TransportError(format!("Invalid ServiceEndpoint address {}: {}", self.service_address, err)));
+                error!(
+                    "Invalid ServiceEndpoint address {}: {}",
+                    self.service_address, err
+                );
+                return Err(DIDCacheError::TransportError(format!(
+                    "Invalid ServiceEndpoint address {}: {}",
+                    self.service_address, err
+                )));
             }
         };
 
-        
         let web_socket = match connect(&url).await {
             Ok(web_socket) => web_socket,
             Err(err) => {
                 warn!("WebSocket failed. Reason: {}", err);
-                return Err(DIDCacheError::TransportError(format!("Websocket connection failed: {}", err)));
+                return Err(DIDCacheError::TransportError(format!(
+                    "Websocket connection failed: {}",
+                    err
+                )));
             }
         };
-       
 
         debug!("Completed websocket connection");
 
@@ -301,44 +305,39 @@ impl NetworkTask {
     }
 
     /// Processes inbound websocket messages from the remote server
-    fn ws_recv(
-        &mut self,
-        message: String,
-    ) -> Result<(), DIDCacheError> {
-                        let response: Result<WSResponseType, _> = serde_json::from_str(&message);
-                        match response {
-                            Ok(WSResponseType::Response(response)) => {
-                                debug!("Received response: {:?}", response.hash);
-                                if let Some(channels) = self.cache.remove(&response.hash, None) {
-                                    // Loop through and notify each registered channel
-                                    for channel in channels {
-                                        let _ = channel.send(WSCommands::ResponseReceived(
-                                            Box::new(response.document.clone()),
-                                        ));
-                                    }
-                                } else {
-                                    warn!("Response not found in request list: {}", response.hash);
-                                }
-                            }
-                            Ok(WSResponseType::Error(response)) => {
-                                warn!(
-                                    "Received error: did hash({}) Error: {:?}",
-                                    response.hash, response.error
-                                );
-                                if let Some(channels) = self.cache.remove(&response.hash, None) {
-                                    for channel in channels {
-                                        let _ = channel.send(WSCommands::ErrorReceived(
-                                            response.error.clone(),
-                                        ));
-                                    }
-                                } else {
-                                    warn!("Response not found in request list: {}", response.hash);
-                                }
-                            }
-                            Err(e) => {
-                                warn!("Error parsing message: {:?}", e);
-                            }
-                        }
+    fn ws_recv(&mut self, message: String) -> Result<(), DIDCacheError> {
+        let response: Result<WSResponseType, _> = serde_json::from_str(&message);
+        match response {
+            Ok(WSResponseType::Response(response)) => {
+                debug!("Received response: {:?}", response.hash);
+                if let Some(channels) = self.cache.remove(&response.hash, None) {
+                    // Loop through and notify each registered channel
+                    for channel in channels {
+                        let _ = channel.send(WSCommands::ResponseReceived(Box::new(
+                            response.document.clone(),
+                        )));
+                    }
+                } else {
+                    warn!("Response not found in request list: {}", response.hash);
+                }
+            }
+            Ok(WSResponseType::Error(response)) => {
+                warn!(
+                    "Received error: did hash({}) Error: {:?}",
+                    response.hash, response.error
+                );
+                if let Some(channels) = self.cache.remove(&response.hash, None) {
+                    for channel in channels {
+                        let _ = channel.send(WSCommands::ErrorReceived(response.error.clone()));
+                    }
+                } else {
+                    warn!("Response not found in request list: {}", response.hash);
+                }
+            }
+            Err(e) => {
+                warn!("Error parsing message: {:?}", e);
+            }
+        }
 
         Ok(())
     }

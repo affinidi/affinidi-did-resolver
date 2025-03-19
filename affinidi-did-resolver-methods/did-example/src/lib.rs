@@ -6,8 +6,8 @@
  * Enable using the did_example feature flag
  */
 
+use gxhash::{HashMap, HashMapExt};
 use ssi::dids::document::Document;
-use std::collections::HashMap;
 use thiserror::Error;
 
 #[derive(Error, Debug)]

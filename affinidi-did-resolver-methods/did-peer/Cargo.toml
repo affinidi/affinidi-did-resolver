@@ -20,7 +20,6 @@ base64.workspace = true
 iref.workspace = true
 serde_json.workspace = true
 serde.workspace = true
-serde-wasm-bindgen.workspace = true
 ssi.workspace = true
 thiserror.workspace = true
 wasm-bindgen.workspace = true

@@ -1,10 +1,10 @@
 use crate::SharedData;
 use axum::{
-    extract::{Path, State},
     Json,
+    extract::{Path, State},
 };
 use http::StatusCode;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use tracing::error;
 
 pub async fn resolver_handler(

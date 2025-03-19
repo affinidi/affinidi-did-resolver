@@ -2,6 +2,12 @@
 
 ## Changelog history
 
+### 19th March 2025 (release 0.4.2)
+
+* MAINTENANCE: Crates updated
+* CHANGE: Hashing functions streamlined and changed from blake3 to gxhash
+  * Includes HashMap usage
+
 ### 4th March 2025 (release 0.4.1)
 
 * Fixing release issues to crates.io

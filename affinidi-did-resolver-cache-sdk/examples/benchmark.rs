@@ -2,7 +2,7 @@
 //! Benchmark references: (Apple M1 Max)
 //! - 1 million did:key's generated in ~4.2 seconds, consumes 2.3MiB of memory
 use affinidi_did_resolver_cache_sdk::{
-    config::DIDCacheConfigBuilder, errors::DIDCacheError, DIDCacheClient,
+    DIDCacheClient, config::DIDCacheConfigBuilder, errors::DIDCacheError,
 };
 use clap::Parser;
 use futures_util::future::join_all;
@@ -12,8 +12,8 @@ use rand::Rng;
 use rayon::prelude::*;
 use ssi::prelude::DIDResolver;
 use ssi::{
-    dids::{DIDKey, DID},
     JWK,
+    dids::{DID, DIDKey},
 };
 use std::sync::Arc;
 use std::time::Duration;
@@ -58,7 +58,9 @@ async fn main() -> Result<(), DIDCacheError> {
             cache_config = cache_config.with_network_mode(_address);
         }
         #[cfg(not(feature = "network"))]
-        panic!("Network mode is not enabled in this build. Enable feature `network` to use network mode.");
+        panic!(
+            "Network mode is not enabled in this build. Enable feature `network` to use network mode."
+        );
     } else {
         println!("Running in local mode.");
     }
@@ -101,7 +103,7 @@ async fn main() -> Result<(), DIDCacheError> {
 
     settle_down(5).await;
 
-    //resolve_dids(&cache, dids_arc.clone(), args.resolve_count).await?;
+    resolve_dids(&cache, dids_arc.clone(), args.resolve_count).await?;
 
     Ok(())
 }
@@ -153,7 +155,8 @@ async fn generate_dids(count: u32) -> Vec<String> {
     let elapsed = _start.elapsed();
     let per_second = count as f64 / elapsed.as_secs_f64();
     println!(
-        "Generated 100,000 did:key's in {} seconds :: {} keys/second :: Memory used: {}",
+        "Generated {} did:key's in {} seconds :: {} keys/second :: Memory used: {}",
+        count,
         pretty_print_float(_start.elapsed().as_secs_f64()),
         pretty_print_float(per_second),
         pretty_print_binary_size(size_of_val(&*dids) as f64)
@@ -226,7 +229,7 @@ async fn resolve_dids(
         handles.push(tokio::spawn(async move {
             match _cache.resolve(_dids.get(r).unwrap()).await {
                 Ok(res) => {
-                    println!("Resolved DID: ({}) cache_hit?({})", res.did, res.cache_hit);
+                    //println!("Resolved DID: ({}) cache_hit?({})", res.did, res.cache_hit);
                     if res.cache_hit {
                         //let mut lock = _cache_hit.lock().await;
                         //*lock += 1;

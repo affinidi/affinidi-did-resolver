@@ -33,7 +33,7 @@ pub struct WSRequest {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct WSResponse {
     pub did: String,
-    pub hash: String,
+    pub hash: u128,
     pub document: Document,
 }
 
@@ -44,7 +44,7 @@ pub struct WSResponse {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct WSResponseError {
     pub did: String,
-    pub hash: String,
+    pub hash: u128,
     pub error: String,
 }
 
@@ -65,7 +65,7 @@ impl DIDCacheClient {
     pub(crate) async fn network_resolve(
         &self,
         did: &str,
-        did_hash: &str,
+        did_hash: u128,
     ) -> Result<Document, DIDCacheError> {
         let _span = span!(Level::DEBUG, "network_resolve");
         async move {
@@ -105,7 +105,7 @@ impl DIDCacheClient {
                 select! {
                     _ = &mut sleep => {
                         warn!("Timeout reached, no message received did_hash ({})", did_hash);
-                        network_task_tx.send(WSCommands::TimeOut(unique_id, did_hash.to_string())).await.map_err(|err| {
+                        network_task_tx.send(WSCommands::TimeOut(unique_id, did_hash)).await.map_err(|err| {
                             DIDCacheError::TransportError(format!("Could not send timeout message to ws_handler: {:?}", err))
                         })?;
                          Err(DIDCacheError::NetworkTimeout)
